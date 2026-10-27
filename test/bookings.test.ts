@@ -47,7 +47,7 @@ test('a failed confirmation insert rolls back the booking and payout together',(
 
 test('strict cancellation preserves the host share of retained accommodation',()=>{
  const {db}=fixture();db.prepare("UPDATE listings SET cancellation_policy='strict' WHERE slug=?").run(input.slug);
- const {booking}=createBooking(db,{...input,from:'2026-11-23',to:'2026-11-26'},guest);
- const cancelled=cancelBooking(db,booking.id,guest);assert.equal(cancelled.refund_cents,24060);assert.equal(cancelled.payment_status,'partially_refunded');assert.equal(cancelled.host_payout_cents,16005);
- const payout=hostPayouts(db,host.id).items[0];assert.equal(payout.status,'scheduled');assert.equal(payout.amount_cents,16005);db.close();
+ const {booking}=createBooking(db,{...input,from:'2026-11-23',to:'2026-11-30'},guest);
+ const cancelled=cancelBooking(db,booking.id,guest);assert.equal(cancelled.refund_cents,51060);assert.equal(cancelled.payment_status,'partially_refunded');assert.equal(cancelled.host_payout_cents,40255);
+ const payout=hostPayouts(db,host.id).items[0];assert.equal(payout.status,'scheduled');assert.equal(payout.amount_cents,40255);db.close();
 });
