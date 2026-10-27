@@ -1,0 +1,33 @@
+name: Bug report
+description: Something did not work as expected.
+title: ""
+labels: [bug]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the page or command and the result you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What should happen?
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Node version, browser, and application date
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Request IDs, errors, screenshots, or command output. Do not include real payment data.

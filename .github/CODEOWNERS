@@ -1,0 +1,27 @@
+# Default repository review
+* @johnlindquist
+# Discovery
+/src/domain/search.ts @johnlindquist
+/test/search.test.ts @johnlindquist
+/test/bench.ts @johnlindquist
+# Pricing and reservations
+/src/domain/pricing.ts @johnlindquist
+/src/domain/bookings.ts @johnlindquist
+/src/domain/cancellation.ts @johnlindquist
+/src/domain/payouts.ts @johnlindquist
+/test/pricing.test.ts @johnlindquist
+/test/bookings.test.ts @johnlindquist
+# Host tools
+/src/domain/calendar.ts @johnlindquist
+/src/domain/listings.ts @johnlindquist
+/src/domain/host.ts @johnlindquist
+/src/pages/host.ts @johnlindquist
+/public/js/calendar.js @johnlindquist
+# Support and feedback
+/src/domain/support.ts @johnlindquist
+/src/domain/feedback.ts @johnlindquist
+/src/pages/admin.ts @johnlindquist
+# Shared platform
+/src/server.ts @johnlindquist
+/src/router.ts @johnlindquist
+/db/ @johnlindquist

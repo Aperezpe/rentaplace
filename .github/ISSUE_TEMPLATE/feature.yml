@@ -1,0 +1,24 @@
+name: Feature request
+description: A better way to plan or host a stay.
+labels: [feature]
+body:
+  - type: textarea
+    id: need
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What would a good result look like?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Who needs this and when?
+  - type: textarea
+    id: decisions
+    attributes:
+      label: Decisions or open questions
