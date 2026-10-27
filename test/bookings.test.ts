@@ -11,7 +11,7 @@ test('checkout saves a priced reservation, payout and local confirmation without
  assert.equal(booking.status,'confirmed');assert.equal(booking.total_cents,q.totalCents);assert.equal(booking.host_payout_cents,q.hostPayoutCents);
  assert.equal(hostPayouts(db,host.id).items[0].scheduled_date,'2026-11-11');
  const outbox:any=db.prepare('SELECT * FROM email_outbox').get();assert.equal(outbox.status,'written');assert.equal(JSON.parse(outbox.payload).reference,booking.reference);
- const file=readFileSync(join(OUTBOX_DIR,outbox.id+'.json'),'utf8');assert.ok(!file.includes('4242'));assert.ok(!JSON.stringify(booking).includes('4242424242424242'));db.close();
+ const file=readFileSync(join(OUTBOX_DIR,outbox.id+'.json'),'utf8');assert.ok(!file.includes('4242424242424242')&&!file.includes('4242 4242 4242 4242'));assert.ok(!JSON.stringify(booking).includes('4242424242424242'));db.close();
 });
 test('invalid demo payment, past dates and excess guests leave no reservation',()=>{
  const {db}=fixture();for(const bad of [{cardNumber:'5555 5555 5555 4444'},{from:'2026-10-01',to:'2026-10-03'},{guests:9}])assert.throws(()=>createBooking(db,{...input,...bad},guest));

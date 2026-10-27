@@ -26,7 +26,7 @@ Quotes validate dates, guest count and current availability. Each result include
 
 POST `/api/bookings` accepts `slug`, `from`, `to`, `guests`, `cardNumber`, optional `guestName`, `guestEmail`, and `idempotencyKey`. Use the test number only. A fresh booking returns 201; a matching idempotent retry returns 200. An overlapping reservation returns 409. Requests for homes without instant confirmation remain pending until the owning host responds.
 
-POST `/api/bookings/{id}/cancel` computes the policy refund from the saved price snapshot and cancels scheduled payouts. GET `/api/bookings` and `/api/bookings/{id}` are guest-scoped.
+POST `/api/bookings/{id}/cancel` computes the policy refund from the saved price snapshot and adjusts scheduled payouts to the retained host share; full refunds cancel the payout. GET `/api/bookings` and `/api/bookings/{id}` are guest-scoped.
 
 ## Host operations
 
