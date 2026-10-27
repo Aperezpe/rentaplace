@@ -2,7 +2,11 @@ import type { Account } from '../types.ts';
 import { today, addDays } from '../config.ts';
 export const e=(v:unknown)=>String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 export const money=(cents:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:cents%100?2:0}).format(cents/100);
-export const dateLabel=(date:string,options: Intl.DateTimeFormatOptions={month:'short',day:'numeric'})=>new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US',{timeZone:'UTC',...options});
+const dateFormats=new Map<string,Intl.DateTimeFormat>();
+export const dateLabel=(date:string,options: Intl.DateTimeFormatOptions={month:'short',day:'numeric'})=>{
+ const key=JSON.stringify(options);let format=dateFormats.get(key);if(!format){format=new Intl.DateTimeFormat('en-US',{timeZone:'UTC',...options});dateFormats.set(key,format);}
+ return format.format(new Date(`${date}T12:00:00Z`));
+};
 export const fullDate=(date:string)=>dateLabel(date,{weekday:'short',month:'short',day:'numeric',year:'numeric'});
 export const initials=(name:string)=>name.split(' ').map(p=>p[0]).slice(0,2).join('');
 export function icon(name:string,cls='') {

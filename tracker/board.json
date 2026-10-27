@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "project": "RentAPlace",
+  "columns": [
+    {
+      "id": "todo",
+      "label": "To do"
+    },
+    {
+      "id": "in-progress",
+      "label": "In progress"
+    },
+    {
+      "id": "checking",
+      "label": "Checking"
+    },
+    {
+      "id": "on-hold",
+      "label": "On hold"
+    },
+    {
+      "id": "done",
+      "label": "Done"
+    }
+  ],
+  "milestones": [
+    "November release",
+    "Holiday season"
+  ],
+  "cards": [
+    {
+      "id": "closed-home-booking",
+      "title": "Closed home still bookable",
+      "column": "todo",
+      "owner": "Reservations",
+      "description": "A guest can reach checkout for Beach House even though it is closed. Confirm the expected behavior for existing reservations and new checkouts.",
+      "labels": [
+        "bug",
+        "pricing"
+      ],
+      "files": [
+        "src/domain/bookings.ts",
+        "src/pages/guest.ts"
+      ]
+    },
+    {
+      "id": "search-performance",
+      "title": "Listings page is slow",
+      "column": "in-progress",
+      "owner": "Discovery",
+      "description": "Broad searches take noticeably longer than the rest of the app. Keep timings and matching result IDs for each change.",
+      "labels": [
+        "performance",
+        "search"
+      ],
+      "files": [
+        "src/domain/search.ts",
+        "test/bench.ts"
+      ],
+      "commit": "06242ae"
+    },
+    {
+      "id": "holiday-stay-length",
+      "title": "Minimum stay by date: hosts want it for holidays starting November 16",
+      "column": "on-hold",
+      "owner": "Host tools",
+      "description": "Hosts want a booking-length rule for the holiday period. Confirm the number of nights, affected homes, effective date, and treatment of existing reservations before implementation.",
+      "labels": [
+        "feature",
+        "host-tools"
+      ],
+      "files": [
+        "src/domain/listings.ts",
+        "src/domain/bookings.ts"
+      ],
+      "waitingOn": "Product decisions about the rule and existing reservations"
+    },
+    {
+      "id": "calendar-pointer",
+      "title": "Calendar feels slow with many homes",
+      "column": "in-progress",
+      "owner": "Host tools",
+      "description": "Moving through the large host calendar feels uneven while request logs do not show a corresponding problem. Capture the interaction and inspect the browser.",
+      "labels": [
+        "performance",
+        "host-tools"
+      ],
+      "files": [
+        "public/js/calendar.js",
+        "src/domain/calendar.ts",
+        "src/pages/host.ts"
+      ]
+    },
+    {
+      "id": "inbox-routing",
+      "title": "Give incoming support a clear destination",
+      "column": "todo",
+      "owner": "Support",
+      "description": "The inbox needs a consistent set of categories and an accountable owner for each incoming request. Agree on the categories with support first.",
+      "labels": [
+        "feature",
+        "support"
+      ],
+      "files": [
+        "src/domain/support.ts",
+        "src/pages/admin.ts"
+      ]
+    },
+    {
+      "id": "refund-window",
+      "title": "Review refund amount when check-in is five days away",
+      "column": "checking",
+      "owner": "Reservations",
+      "description": "A guest expected a different refund for a moderate-policy reservation. Reproduce the amount at the stated date before changing pricing or copy.",
+      "labels": [
+        "bug",
+        "pricing",
+        "support"
+      ],
+      "files": [
+        "src/domain/cancellation.ts",
+        "test/cancellation.test.ts"
+      ]
+    },
+    {
+      "id": "quick-start",
+      "title": "Refresh quick-start instructions",
+      "column": "todo",
+      "owner": "Platform",
+      "description": "The setup instructions need to agree with the commands and server startup output. Check the README and runbook from a clean checkout.",
+      "labels": [
+        "chore",
+        "good first issue"
+      ],
+      "files": [
+        "README.md",
+        "docs/runbook.md",
+        "package.json"
+      ]
+    },
+    {
+      "id": "demo-checkout",
+      "title": "Reserve a home with demo payment",
+      "column": "done",
+      "owner": "Reservations",
+      "description": "Guest details, a clear price breakdown, a local confirmation, and a reservation in Your trips.",
+      "labels": [
+        "feature",
+        "pricing"
+      ],
+      "files": [
+        "src/domain/bookings.ts",
+        "src/pages/guest.ts",
+        "test/journey.ts"
+      ],
+      "commit": "374848f"
+    },
+    {
+      "id": "payout-csv",
+      "title": "Export host payout history",
+      "column": "done",
+      "owner": "Host tools",
+      "description": "Hosts can download the same payout records they see in their workspace.",
+      "labels": [
+        "feature",
+        "host-tools"
+      ],
+      "files": [
+        "src/domain/payouts.ts",
+        "src/pages/host.ts",
+        "test/host.test.ts"
+      ],
+      "commit": "374848f"
+    },
+    {
+      "id": "phone-calendar",
+      "title": "Fit host date controls on a phone",
+      "column": "done",
+      "owner": "Host tools",
+      "description": "The calendar block form should fit a 390px viewport without making the page scroll sideways.",
+      "labels": [
+        "bug",
+        "host-tools"
+      ],
+      "files": [
+        "public/css/app.css"
+      ],
+      "commit": "56c59df"
+    },
+    {
+      "id": "page-feedback",
+      "title": "Keep feedback with its page context",
+      "column": "done",
+      "owner": "Support",
+      "description": "Every page has a small feedback form. Store the page, application time, rating, and message.",
+      "labels": [
+        "feature",
+        "support"
+      ],
+      "files": [
+        "src/domain/feedback.ts",
+        "src/pages/layout.ts",
+        "test/operations.test.ts"
+      ],
+      "commit": "860dbd9"
+    },
+    {
+      "id": "rating-order",
+      "title": "Review rating order on search results",
+      "column": "checking",
+      "owner": "Discovery",
+      "description": "The rating branch does not pass the existing highest-first ordering check. Review the displayed order and the assertion before merging.",
+      "labels": [
+        "bug",
+        "search"
+      ],
+      "files": [
+        "src/domain/search.ts",
+        "test/search.test.ts"
+      ],
+      "branch": "sort-by-rating"
+    }
+  ]
+}
