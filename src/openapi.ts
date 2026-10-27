@@ -1,3 +1,4 @@
+export {};
 type Schema=Record<string,unknown>;
 const str=(description:string,extra:Schema={})=>({type:'string',description,...extra});
 const int=(description:string,min=0)=>({type:'integer',minimum:min,description});

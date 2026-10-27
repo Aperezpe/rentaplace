@@ -1,0 +1,11 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+const directory=mkdtempSync(join(tmpdir(),'rentaplace-test-'));
+process.env.RAP_DB=join(directory,'rentaplace.db');
+process.env.RAP_LOG_DIR=join(directory,'logs');
+process.env.RAP_OUTBOX_DIR=join(directory,'outbox');
+process.env.RAP_TODAY='2026-11-09';
+process.env.RAP_LOG_STDOUT='0';
+process.env.RAP_SESSION_SECRET='local-test-session-key-not-used-by-the-server';
+process.on('exit',()=>rmSync(directory,{recursive:true,force:true}));

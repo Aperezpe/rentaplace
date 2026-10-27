@@ -4,7 +4,7 @@ import { LOG_DIR, now } from './config.ts';
 export function log(event: string, detail: Record<string, unknown> = {}) {
   const entry={time:now(),event,...detail};
   const line=JSON.stringify(entry);
-  process.stdout.write(line+'\n');
+  if(process.env.RAP_LOG_STDOUT!=='0')process.stdout.write(line+'\n');
   mkdirSync(LOG_DIR,{recursive:true});
   appendFileSync(join(LOG_DIR,'app.log'),line+'\n');
   return entry;

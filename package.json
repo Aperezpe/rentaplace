@@ -11,7 +11,7 @@
     "dev": "node --watch src/server.ts",
     "start": "node src/server.ts",
     "seed": "node data/seed.ts",
-    "test": "node --test --test-isolation=none test/*.test.ts",
+    "test": "node --import ./test/setup.ts --test --test-isolation=none test/*.test.ts",
     "bench": "node test/bench.ts",
     "journey": "node test/journey.ts",
     "rap": "node bin/rap.ts"

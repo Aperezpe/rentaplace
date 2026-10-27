@@ -105,7 +105,7 @@ export function respondToReservation(db: DatabaseSync,id: string,action: string,
     if(row.status!=='pending')throw new AppError(409,'STATUS_CHANGED','Only pending requests can be accepted or declined.');
     const status=action==='accept'?'confirmed':'declined';
     db.prepare('UPDATE bookings SET status=?,payment_status=?,refund_cents=? WHERE id=?').run(status,action==='accept'?'paid':'released',action==='decline'?row.total_cents:0,id);
-    const updated={...row,status};
+    const updated={...row,status,payment_status:action==='accept'?'paid':'released',refund_cents:action==='decline'?row.total_cents:0};
     if(action==='accept')payout=schedulePayout(db,updated,account.id);
     queueConfirmation(db,updated,row.title);return updated;
   });

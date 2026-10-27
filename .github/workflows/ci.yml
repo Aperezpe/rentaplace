@@ -1,0 +1,40 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Seed deterministic data
+        run: npm run seed
+      - name: Test
+        run: npm test
+      - name: Start server
+        run: |
+          npm start > /tmp/rentaplace-ci.log 2>&1 &
+          echo $! > /tmp/rentaplace-ci.pid
+          node --input-type=module -e 'for(let i=0;i<30;i++){try{const r=await fetch("http://127.0.0.1:5180/api/health");if(r.ok)process.exit(0)}catch{}await new Promise(r=>setTimeout(r,200))}process.exit(1)'
+      - name: Guest and host journey
+        run: npm run journey
+      - name: Search benchmark
+        run: npm run bench
+      - name: Save logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-logs
+          path: |
+            /tmp/rentaplace-ci.log
+            logs/app.log
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f /tmp/rentaplace-ci.pid ]; then
+            kill "$(cat /tmp/rentaplace-ci.pid)" || true
+          fi
