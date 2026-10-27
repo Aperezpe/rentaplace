@@ -86,11 +86,15 @@ export function cancelBooking(db: DatabaseSync,id: string,user: Account | undefi
   if(booking.status==='cancelled')return booking;
   requireValue(['confirmed','pending'].includes(booking.status) && booking.from_date>=today(),'This reservation can no longer be cancelled online. Contact support for help.');
   const refund=booking.status==='pending'?booking.total_cents:cancellationRefund(booking,today());
+  const refundedAccommodation=refund===booking.total_cents?booking.accommodation_cents:refund===booking.cleaning_cents?0:Math.round(booking.accommodation_cents/2);
+  const retainedAccommodation=booking.accommodation_cents-refundedAccommodation;
+  const hostPayout=retainedAccommodation-Math.round(retainedAccommodation*3/100);
+  const paymentStatus=refund===booking.total_cents?'refunded':refund>0?'partially_refunded':'paid';
   const cancelled=transaction(db,()=>{
-    const result=db.prepare("UPDATE bookings SET status='cancelled',refund_cents=?,cancelled_at=?,payment_status='refunded' WHERE id=? AND status IN ('confirmed','pending')").run(refund,now(),id);
+    const result=db.prepare("UPDATE bookings SET status='cancelled',refund_cents=?,cancelled_at=?,payment_status=?,host_payout_cents=? WHERE id=? AND status IN ('confirmed','pending')").run(refund,now(),paymentStatus,hostPayout,id);
     if(!result.changes)throw new AppError(409,'STATUS_CHANGED','This reservation changed. Refresh before continuing.');
-    db.prepare("UPDATE payouts SET status='cancelled' WHERE booking_id=? AND status='scheduled'").run(id);
-    return {...booking,status:'cancelled',refund_cents:refund,cancelled_at:now(),payment_status:'refunded'};
+    db.prepare("UPDATE payouts SET status=?,amount_cents=? WHERE booking_id=? AND status='scheduled'").run(hostPayout>0?'scheduled':'cancelled',hostPayout,id);
+    return {...booking,status:'cancelled',refund_cents:refund,cancelled_at:now(),payment_status:paymentStatus,host_payout_cents:hostPayout};
   });
   log('booking.cancelled',{bookingId:id,refundCents:refund});
   return cancelled;

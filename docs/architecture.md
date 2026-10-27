@@ -21,6 +21,8 @@ CODEOWNERS identifies the repository owner for these paths. A change that crosse
 
 Confirmed and pending reservations hold dates. Checkout is exclusive, so a guest can arrive on the previous guest's checkout date. The database owns availability at checkout. A repeated idempotency key returns the existing reservation if the guest, home, dates, and guest count agree.
 
+On cancellation, a full refund cancels the scheduled payout. A partial refund leaves the host share of retained accommodation scheduled, after the platform fee.
+
 The outbox writer copies pending messages to `outbox/<id>.json` using a temporary file and atomic rename. Delivery failures leave the row pending for retry at startup or the next booking. There is no mail transport.
 
 ## Money and time
