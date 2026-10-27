@@ -1,0 +1,7 @@
+data/*.db*
+data/session.key
+logs/
+outbox/
+.env
+.DS_Store
+*.log

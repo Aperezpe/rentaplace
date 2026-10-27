@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ES2023","module":"NodeNext","moduleResolution":"NodeNext","allowImportingTsExtensions":true,"noEmit":true,"strict":true,"erasableSyntaxOnly":true},"include":["src/**/*.ts","data/**/*.ts","bin/**/*.ts","test/**/*.ts"]}
