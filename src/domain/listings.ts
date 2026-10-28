@@ -36,7 +36,7 @@ export function saveListing(db: DatabaseSync,input: any,user: Account | undefine
   const amen=Array.isArray(input.amenities)?input.amenities:typeof input.amenities==='string'?input.amenities.split(',').map((s:string)=>s.trim()).filter(Boolean):[];
   requireValue(amen.length<=AMENITIES.length && amen.every((a:string)=>AMENITIES.includes(a)),'Choose amenities from the available list.');
   const photos=Array.isArray(input.photos)?input.photos:typeof input.photos==='string'?input.photos.split(/[\n,]/).map((s:string)=>s.trim()).filter(Boolean):[];
-  requireValue(photos.length>=1 && photos.length<=8 && photos.every((p:string)=>/^\/img\/[a-z0-9-]+\.svg$/.test(p)&&existsSync(join(ROOT,'public',p))),'Choose 1–8 local illustrations from the image collection.');
+  requireValue(photos.length>=1 && photos.length<=8 && photos.every((p:string)=>/^\/img\/(photos\/[a-z0-9-]+\.jpg|[a-z0-9-]+\.svg)$/.test(p)&&existsSync(join(ROOT,'public',p))),'Choose 1–8 local illustrations from the image collection.');
   const lat=Number(input.lat ?? old?.lat ?? 38.95),lng=Number(input.lng ?? old?.lng ?? -120.05);
   requireValue(Number.isFinite(lat)&&lat>=-90&&lat<=90&&Number.isFinite(lng)&&lng>=-180&&lng<=180,'Enter valid map coordinates.');
   const instant=input.instantBook===true || input.instantBook==='1' || input.instantBook==='on'?1:0;
