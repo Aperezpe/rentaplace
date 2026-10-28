@@ -12,6 +12,8 @@ RAP_URL=http://127.0.0.1:5282 npm run journey
 RAP_URL=http://127.0.0.1:5282 npm run rap -- doctor --json
 ```
 
+If page edits stop reloading in development, the system may not be delivering file-change events. Start with `RAP_WATCH_POLL_MS=1000 npm run dev` to check for changes every second instead.
+
 ## Checks
 
 ```sh

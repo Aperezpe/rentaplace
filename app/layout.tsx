@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <TooltipProvider>
           <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground">Skip to content</a>
           <SiteHeader user={user} />
-          <main id="main" className="flex-1">{children}</main>
+          <main id="main" className="flex-1 pb-20 has-[>[data-bleed-end]:last-child]:pb-0">{children}</main>
           <SiteFooter />
           <Suspense>
             <FlashMessages />

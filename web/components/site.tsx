@@ -54,31 +54,40 @@ export function SiteHeader({ user }: { user?: Account }) {
   );
 }
 
+const FOOTER_LINKS: { title: string; links: [string, string][] }[] = [
+  { title: 'Explore', links: [['Find a place', '/search'], ['Your trips', '/trips'], ['Sign in', '/signin']] },
+  { title: 'Hosting', links: [['Your host space', '/host'], ['Homes', '/host/listings'], ['Calendar', '/host/calendar'], ['Payouts', '/host/payouts']] },
+  { title: 'Help', links: [['Help center', '/help'], ['Contact support', '/help'], ['Local operations', '/admin']] },
+];
+
 export function SiteFooter() {
   return (
-    <footer className="mt-24 border-t bg-topo">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
-        <div className="space-y-3">
-          <Logo />
-          <p className="max-w-xs text-sm text-muted-foreground">A little closer to somewhere you love.</p>
+    <footer className="relative isolate overflow-hidden bg-primary text-primary-foreground">
+      <div aria-hidden className="bg-topo absolute inset-0 -z-10 opacity-[0.09] invert [mask-image:linear-gradient(to_left,black_15%,transparent_75%)]" />
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 pt-16 pb-12 sm:px-6 lg:grid-cols-[1.3fr_2fr] lg:px-8">
+        <div className="max-w-sm space-y-4">
+          <Link href="/" aria-label="RentAPlace home" className="flex items-center gap-2.5 font-semibold tracking-tight">
+            <img src="/img/brand/mark-64.png" alt="" width={32} height={32} className="size-8 rounded-lg ring-1 ring-white/25" />
+            <span className="text-[1.35rem]">RentAPlace<span className="text-[#b9c9b3]">.</span></span>
+          </Link>
+          <p className="font-serif text-2xl leading-snug text-primary-foreground/90">A little closer to somewhere you love.</p>
+          <p className="flex items-center gap-2 text-sm text-primary-foreground/75"><Leaf className="size-4 text-[#b9c9b3]" />Cabins, cottages and quiet places to stay.</p>
         </div>
-        <nav aria-label="Explore" className="grid content-start gap-2 text-sm">
-          <span className="eyebrow mb-1">Explore</span>
-          <Link className="hover:text-primary" href="/search">Explore homes</Link>
-          <Link className="hover:text-primary" href="/trips">Your trips</Link>
-          <Link className="hover:text-primary" href="/help">Get help</Link>
-        </nav>
-        <nav aria-label="Hosting" className="grid content-start gap-2 text-sm">
-          <span className="eyebrow mb-1">Hosting</span>
-          <Link className="hover:text-primary" href="/host">Become a host</Link>
-          <Link className="hover:text-primary" href="/host/calendar">Host calendar</Link>
-          <Link className="hover:text-primary" href="/admin">Local operations</Link>
-        </nav>
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
+          {FOOTER_LINKS.map((group) => (
+            <nav key={group.title} aria-label={group.title} className="grid content-start gap-3 text-sm">
+              <h2 className="font-sans text-xs font-semibold tracking-[0.14em] text-[#b9c9b3] uppercase">{group.title}</h2>
+              {group.links.map(([label, href]) => (
+                <Link key={label} href={href} className="w-fit text-primary-foreground/85 underline-offset-4 transition-colors hover:text-primary-foreground hover:underline">{label}</Link>
+              ))}
+            </nav>
+          ))}
+        </div>
       </div>
-      <div className="border-t">
-        <div className="mx-auto flex max-w-7xl flex-wrap justify-between gap-2 px-4 py-5 text-xs text-muted-foreground sm:px-6 lg:px-8">
-          <span>Demo marketplace · All homes and accounts are fictional · Photos are AI-generated</span>
-          <span>USD · English · No real payments</span>
+      <div className="border-t border-white/12">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 pt-6 pb-24 text-xs text-primary-foreground/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+          <p>© 2026 RentAPlace · A demo marketplace. Homes, hosts and guests are fictional, and photos are AI-generated.</p>
+          <p>USD · English · No real payments</p>
         </div>
       </div>
     </footer>

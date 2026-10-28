@@ -79,7 +79,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="relative isolate mt-24 bg-botanical">
+      <section data-bleed-end className="relative isolate mt-24 bg-botanical">
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/85 to-background/40" />
         <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.15fr] lg:px-8">
           <div className="space-y-4">

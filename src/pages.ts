@@ -17,6 +17,10 @@ export async function startPages(db: DatabaseSync, port: number): Promise<Pages 
   if (process.env.RAP_PAGES === 'off') return undefined;
   (globalThis as { __rapDb?: DatabaseSync }).__rapDb = db;
   const dev = process.env.NODE_ENV !== 'production';
+  // `node --watch` asks this process to report loaded files through this variable.
+  // Next's build workers inherit the environment and would send those reports to
+  // their parents, which reject every one, so clear it before starting Next.
+  delete process.env.WATCH_REPORT_DEPENDENCIES;
   const { default: next } = await import('next');
   const app = next({ dev, dir: ROOT, hostname: '127.0.0.1', port });
   await app.prepare();

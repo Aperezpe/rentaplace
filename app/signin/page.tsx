@@ -21,7 +21,7 @@ export default async function SignIn({ searchParams }: { searchParams: SearchPar
   const user = await currentUser();
   const accounts = db().prepare("SELECT * FROM users WHERE id IN ('guest-1','guest-2','host-1','host-5','host-6') ORDER BY role,id").all() as Account[];
   return (
-    <div className="grid min-h-[calc(100svh-4rem)] lg:grid-cols-[1fr_1.1fr]">
+    <div data-bleed-end className="grid min-h-[calc(100svh-4rem)] lg:grid-cols-[1fr_1.1fr]">
       <div className="relative hidden lg:block">
         <img src="/img/scenes/signin.jpg" alt="" width={1536} height={1024} className="absolute inset-0 size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
@@ -39,9 +39,9 @@ export default async function SignIn({ searchParams }: { searchParams: SearchPar
           ) : null}
           {user ? (
             <Alert>
-              <AlertDescription className="flex flex-wrap items-center gap-1">
-                You’re signed in as {user.name}. Choose another account below, or
-                <form method="post" action="/auth/signout" className="inline"><Button type="submit" variant="link" className="h-auto p-0">sign out</Button></form>.
+              <AlertDescription className="block">
+                You’re signed in as {user.name}. Choose another account below, or{' '}
+                <form method="post" action="/auth/signout" className="inline"><Button type="submit" variant="link" className="inline h-auto p-0 align-baseline">sign out</Button></form>.
               </AlertDescription>
             </Alert>
           ) : null}

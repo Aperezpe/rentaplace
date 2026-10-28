@@ -113,9 +113,22 @@
     background-image: url("/img/scenes/pattern-botanical.jpg");
     background-size: 900px auto;
   }
+  /* A faint, fine paper grain over the page colour: texture you feel, not see. */
   .bg-paper {
+    position: relative;
+    isolation: isolate;
+    background-color: var(--background);
+  }
+  .bg-paper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background-image: url("/img/scenes/pattern-paper.jpg");
-    background-size: cover;
+    background-size: 720px auto;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    pointer-events: none;
   }
   .bg-waves {
     background-image: url("/img/scenes/pattern-waves.jpg");
