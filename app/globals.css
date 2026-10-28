@@ -77,6 +77,13 @@
   html {
     scrollbar-gutter: stable;
   }
+  /* The gutter above already keeps the scrollbar's space, so menus and dialogs
+     must not add a second compensating margin when they lock scrolling. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    --removed-body-scroll-bar-size: 0px !important;
+  }
   body {
     @apply bg-background text-foreground antialiased;
   }
