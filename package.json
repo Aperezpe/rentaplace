@@ -8,12 +8,12 @@
     "node": ">=24"
   },
   "scripts": {
-    "dev": "node --watch src/server.ts",
-    "start": "node src/server.ts",
-    "seed": "node data/seed.ts",
-    "test": "node --import ./test/setup.ts --test --test-isolation=none test/*.test.ts",
-    "bench": "node test/bench.ts",
-    "journey": "node test/journey.ts",
-    "rap": "node bin/rap.ts"
+    "dev": "node --disable-warning=ExperimentalWarning --watch src/server.ts",
+    "start": "node --disable-warning=ExperimentalWarning src/server.ts",
+    "seed": "node --disable-warning=ExperimentalWarning data/seed.ts",
+    "test": "node --disable-warning=ExperimentalWarning --import ./test/setup.ts --test --test-isolation=none test/*.test.ts",
+    "bench": "node --disable-warning=ExperimentalWarning test/bench.ts",
+    "journey": "node --disable-warning=ExperimentalWarning test/journey.ts",
+    "rap": "node --disable-warning=ExperimentalWarning bin/rap.ts"
   }
 }
