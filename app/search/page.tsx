@@ -32,8 +32,8 @@ function MapPanel({ homes }: { homes: Listing[] }) {
       <div className="flex items-center gap-2 border-b px-4 py-3 text-sm font-medium"><MapPin className="size-4 text-primary" />Explore the area</div>
       <div className="relative aspect-[36/50] bg-waves">
         <svg viewBox="0 0 360 500" role="group" aria-label="Approximate locations of homes on this results page" className="absolute inset-0 size-full">
-          <path d="M-40 70Q220 200 130 330T180 520" fill="none" stroke="#bdd6ce" strokeWidth="26" opacity=".7" />
-          <path d="M-20 390Q120 300 180 340T380 160M-10 185Q120 130 200 210T390 250" fill="none" stroke="#fffdf7" strokeWidth="7" />
+          <path d="M-40 70Q220 200 130 330T180 520" fill="none" stroke="var(--map-water)" strokeWidth="26" opacity=".7" />
+          <path d="M-20 390Q120 300 180 340T380 160M-10 185Q120 130 200 210T390 250" fill="none" stroke="var(--map-road)" strokeWidth="7" />
           {homes.map((h, i) => {
             const x = 50 + ((h.lng - minLng) / Math.max(0.05, maxLng - minLng)) * 260;
             const y = 415 - ((h.lat - minLat) / Math.max(0.05, maxLat - minLat)) * 310;

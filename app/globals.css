@@ -36,6 +36,48 @@
   --chart-3: #c9d6c4;
   --chart-4: #d8bf7a;
   --chart-5: #a3693f;
+  --brand-surface: #214c40;
+  --brand-surface-foreground: #fbfaf6;
+  --map-water: #bdd6ce;
+  --map-road: #fffdf7;
+}
+
+/* Evening: the same pine and sand, with the lights low. */
+.dark {
+  --background: #121916;
+  --foreground: #e6e9e1;
+  --card: #18211d;
+  --card-foreground: #e6e9e1;
+  --popover: #1b2520;
+  --popover-foreground: #e6e9e1;
+  --primary: #a9cdb9;
+  --primary-foreground: #10241c;
+  --secondary: #1f2c26;
+  --secondary-foreground: #c9e0d3;
+  --muted: #1c2521;
+  --muted-foreground: #a3ada6;
+  --accent: #26312b;
+  --accent-foreground: #e6e9e1;
+  --destructive: #e0705a;
+  --border: #2b3731;
+  --input: #3a4740;
+  --ring: #7fa894;
+  --sand: #2a271f;
+  --sage: #34453b;
+  --pending: #c9ad62;
+  --pending-foreground: #ecd79a;
+  --on-primary-accent: #b9c9b3;
+  --blocked: #5a6359;
+  --blocked-soft: #262d29;
+  --chart-1: #a9cdb9;
+  --chart-2: #6f9583;
+  --chart-3: #46604f;
+  --chart-4: #c9ad62;
+  --chart-5: #c98b5e;
+  --brand-surface: #173a2f;
+  --brand-surface-foreground: #f0f2ec;
+  --map-water: #4f6e64;
+  --map-road: #8e9a92;
 }
 
 @theme inline {
@@ -69,6 +111,8 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-brand-surface: var(--brand-surface);
+  --color-brand-surface-foreground: var(--brand-surface-foreground);
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: calc(var(--radius) - 2px);
@@ -84,6 +128,10 @@
     color-scheme: light;
     scrollbar-gutter: stable;
     scrollbar-color: #c9cfc4 var(--background);
+  }
+  html.dark {
+    color-scheme: dark;
+    scrollbar-color: #3a4740 var(--background);
   }
   /* Menus, selects and dialogs lock scrolling by blocking wheel and touch input.
      Keep the page's own scrollbar visible and in place while they are open:
@@ -146,9 +194,23 @@
     mix-blend-mode: multiply;
     pointer-events: none;
   }
+  .dark .bg-paper::before {
+    opacity: 0.06;
+    mix-blend-mode: screen;
+  }
   .bg-waves {
     background-image: url("/img/scenes/pattern-waves.jpg");
     background-size: cover;
     background-position: center;
   }
+
+  /* In the evening theme the light pattern photographs sit under a veil of the surface colour. */
+  .dark .bg-topo:not(footer *),
+  .dark .bg-botanical,
+  .dark .bg-waves {
+    background-image: linear-gradient(var(--pattern-veil), var(--pattern-veil)), var(--pattern-image);
+  }
+  .dark .bg-topo { --pattern-image: url("/img/scenes/pattern-topo.jpg"); --pattern-veil: color-mix(in oklab, var(--card) 94%, transparent); }
+  .dark .bg-botanical { --pattern-image: url("/img/scenes/pattern-botanical.jpg"); --pattern-veil: color-mix(in oklab, var(--background) 88%, transparent); }
+  .dark .bg-waves { --pattern-image: url("/img/scenes/pattern-waves.jpg"); --pattern-veil: color-mix(in oklab, var(--background) 80%, transparent); }
 }

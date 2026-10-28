@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { avatarFor, capitalize, initials } from '@/lib/format';
 import type { Account } from '../../src/types.ts';
 import { AccountMenu, MainNav, MobileNav } from './site-client';
+import { ThemeToggle } from './theme';
 
 export const MAIN_NAV = [
   { href: '/search', label: 'Find a place' },
@@ -40,7 +41,8 @@ export function SiteHeader({ user }: { user?: Account }) {
         <MobileNav items={MAIN_NAV} />
         <Logo />
         <MainNav items={MAIN_NAV} />
-        <div className="ml-auto">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <ThemeToggle />
           {user ? (
             <AccountMenu user={{ id: user.id, name: user.name, role: user.role, avatar: avatarFor(user.id), initials: initials(user.name) }} />
           ) : (
@@ -62,7 +64,7 @@ const FOOTER_LINKS: { title: string; links: [string, string][] }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="relative isolate overflow-hidden bg-primary text-primary-foreground">
+    <footer className="relative isolate overflow-hidden bg-brand-surface text-brand-surface-foreground">
       <div aria-hidden className="bg-topo absolute inset-0 -z-10 opacity-[0.09] invert [mask-image:linear-gradient(to_left,black_15%,transparent_75%)]" />
       <div className="mx-auto grid max-w-7xl gap-12 px-4 pt-16 pb-12 sm:px-6 lg:grid-cols-[1.3fr_2fr] lg:px-8">
         <div className="max-w-sm space-y-4">
@@ -70,22 +72,22 @@ export function SiteFooter() {
             <img src="/img/brand/mark-64.png" alt="" width={32} height={32} className="size-8 rounded-lg ring-1 ring-white/25" />
             <span className="text-[1.35rem]">RentAPlace<span className="text-on-primary-accent">.</span></span>
           </Link>
-          <p className="font-serif text-2xl leading-snug text-primary-foreground/90">A little closer to somewhere you love.</p>
-          <p className="flex items-center gap-2 text-sm text-primary-foreground/75"><Leaf className="size-4 text-on-primary-accent" />Cabins, cottages and quiet places to stay.</p>
+          <p className="font-serif text-2xl leading-snug text-brand-surface-foreground/90">A little closer to somewhere you love.</p>
+          <p className="flex items-center gap-2 text-sm text-brand-surface-foreground/75"><Leaf className="size-4 text-on-primary-accent" />Cabins, cottages and quiet places to stay.</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
           {FOOTER_LINKS.map((group) => (
             <nav key={group.title} aria-label={group.title} className="grid content-start gap-0.5 text-sm sm:gap-3">
               <h2 className="font-sans text-xs font-semibold tracking-[0.14em] text-on-primary-accent uppercase">{group.title}</h2>
               {group.links.map(([label, href]) => (
-                <Link key={label} href={href} className="w-fit py-1.5 text-primary-foreground/85 underline-offset-4 sm:py-0 transition-colors hover:text-primary-foreground hover:underline">{label}</Link>
+                <Link key={label} href={href} className="w-fit py-1.5 text-brand-surface-foreground/85 underline-offset-4 sm:py-0 transition-colors hover:text-brand-surface-foreground hover:underline">{label}</Link>
               ))}
             </nav>
           ))}
         </div>
       </div>
       <div className="border-t border-white/12">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 pt-6 pb-24 text-xs text-primary-foreground/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 pt-6 pb-24 text-xs text-brand-surface-foreground/70 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>© 2026 RentAPlace · A demo marketplace. Homes, hosts and guests are fictional, and photos are AI-generated.</p>
           <p>USD · English · No real payments</p>
         </div>

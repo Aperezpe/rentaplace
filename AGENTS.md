@@ -19,5 +19,5 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
-- UI: pages live in `app/`, shared components in `web/components/` (shadcn/ui primitives in `web/components/ui/`, added with `pnpm dlx shadcn@latest add <name>`). Pages read data through the same domain functions as the JSON API (`src/domain/`). Theme tokens are in `app/globals.css`.
+- UI: pages live in `app/`, shared components in `web/components/` (shadcn/ui primitives in `web/components/ui/`, added with `pnpm dlx shadcn@latest add <name>`). Pages read data through the same domain functions as the JSON API (`src/domain/`). Theme tokens are in `app/globals.css`. Light and dark themes share the same token names (dark values under `.dark`); the header toggle saves the choice in localStorage `rentaplace-theme`, and without a saved choice the page follows the device setting.
 - `npm run typecheck` checks types; `npm run build` builds the pages for `npm start`.
