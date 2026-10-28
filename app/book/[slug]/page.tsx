@@ -82,7 +82,7 @@ export default async function Checkout({ params, searchParams }: { params: Promi
                 <p>{policyText[home.cancellation_policy]} No refunds after check-in.</p>
                 <p>Check-in after 3 pm, check-out by 11 am. No smoking indoors. This entire marketplace uses fictional homes and accounts.</p>
               </div>
-              <Label className="font-normal"><Checkbox name="agree" value="1" required />I’ve reviewed the house rules and cancellation policy.</Label>
+              <Label className="-mx-2 cursor-pointer rounded-lg px-2 py-2.5 font-normal hover:bg-muted/60"><Checkbox name="agree" value="1" required />I’ve reviewed the house rules and cancellation policy.</Label>
             </Step>
             <div className="space-y-3">
               <Button type="submit" size="lg" className="h-12 w-full text-base" disabled={!canBook}>

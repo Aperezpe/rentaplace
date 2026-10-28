@@ -26,7 +26,7 @@ export default async function HelpPage({ searchParams }: { searchParams: SearchP
     <>
       <section className="relative isolate overflow-hidden">
         <img src="/img/scenes/help.jpg" alt="" width={1600} height={900} fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/85 to-background/10" />
+        <div className="hero-wash absolute inset-0 -z-10" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="max-w-xl space-y-3">
             <p className="eyebrow">We’re here when you need us</p>

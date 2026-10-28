@@ -20,7 +20,7 @@ function LogList({ rows }: { rows: unknown[] }) {
   return (
     <ScrollArea className="h-72">
       <div className="grid gap-2 pr-3">
-        {rows.map((r, i) => <pre key={i} className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-[11px] leading-relaxed">{JSON.stringify(r, null, 2)}</pre>)}
+        {rows.map((r, i) => <pre key={i} tabIndex={0} aria-label={`Log entry ${i + 1}`} className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-[11px] leading-relaxed">{JSON.stringify(r, null, 2)}</pre>)}
       </div>
     </ScrollArea>
   );

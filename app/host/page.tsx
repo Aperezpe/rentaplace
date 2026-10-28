@@ -28,7 +28,7 @@ export default async function HostHome() {
     <>
       <section className="relative isolate overflow-hidden border-b">
         <img src="/img/scenes/host.jpg" alt="" width={1536} height={1024} className="absolute inset-0 -z-10 size-full object-cover object-[center_40%]" />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/85 to-background/20" />
+        <div className="hero-wash absolute inset-0 -z-10" />
         <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-14 sm:flex-row sm:items-end sm:justify-between sm:px-6 lg:px-8">
           <div className="flex items-center gap-5">
             <UserAvatar user={user} className="size-16 ring-4 ring-background" />

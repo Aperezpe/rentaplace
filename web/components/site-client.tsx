@@ -77,7 +77,7 @@ export function AccountMenu({ user }: { user: { id: string; name: string; role: 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="h-11 gap-2.5 rounded-full pl-1.5 pr-4">
+        <Button variant="outline" aria-label={`Account menu for ${user.name}`} className="h-11 gap-2.5 rounded-full pl-1.5 pr-4">
           <Avatar className="size-8">
             <AvatarImage src={user.avatar} alt="" />
             <AvatarFallback className="text-xs">{user.initials}</AvatarFallback>

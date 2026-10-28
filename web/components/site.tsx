@@ -68,17 +68,17 @@ export function SiteFooter() {
         <div className="max-w-sm space-y-4">
           <Link href="/" aria-label="RentAPlace home" className="flex items-center gap-2.5 font-semibold tracking-tight">
             <img src="/img/brand/mark-64.png" alt="" width={32} height={32} className="size-8 rounded-lg ring-1 ring-white/25" />
-            <span className="text-[1.35rem]">RentAPlace<span className="text-[#b9c9b3]">.</span></span>
+            <span className="text-[1.35rem]">RentAPlace<span className="text-on-primary-accent">.</span></span>
           </Link>
           <p className="font-serif text-2xl leading-snug text-primary-foreground/90">A little closer to somewhere you love.</p>
-          <p className="flex items-center gap-2 text-sm text-primary-foreground/75"><Leaf className="size-4 text-[#b9c9b3]" />Cabins, cottages and quiet places to stay.</p>
+          <p className="flex items-center gap-2 text-sm text-primary-foreground/75"><Leaf className="size-4 text-on-primary-accent" />Cabins, cottages and quiet places to stay.</p>
         </div>
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
           {FOOTER_LINKS.map((group) => (
-            <nav key={group.title} aria-label={group.title} className="grid content-start gap-3 text-sm">
-              <h2 className="font-sans text-xs font-semibold tracking-[0.14em] text-[#b9c9b3] uppercase">{group.title}</h2>
+            <nav key={group.title} aria-label={group.title} className="grid content-start gap-0.5 text-sm sm:gap-3">
+              <h2 className="font-sans text-xs font-semibold tracking-[0.14em] text-on-primary-accent uppercase">{group.title}</h2>
               {group.links.map(([label, href]) => (
-                <Link key={label} href={href} className="w-fit text-primary-foreground/85 underline-offset-4 transition-colors hover:text-primary-foreground hover:underline">{label}</Link>
+                <Link key={label} href={href} className="w-fit py-1.5 text-primary-foreground/85 underline-offset-4 sm:py-0 transition-colors hover:text-primary-foreground hover:underline">{label}</Link>
               ))}
             </nav>
           ))}
@@ -116,8 +116,8 @@ const STATUS_STYLES: Record<string, string> = {
   active: 'bg-secondary text-primary',
   paid: 'bg-secondary text-primary',
   completed: 'bg-muted text-muted-foreground',
-  pending: 'bg-pending/30 text-[#6b5414]',
-  scheduled: 'bg-pending/30 text-[#6b5414]',
+  pending: 'bg-pending/30 text-pending-foreground',
+  scheduled: 'bg-pending/30 text-pending-foreground',
   paused: 'bg-accent text-accent-foreground',
   cancelled: 'bg-destructive/10 text-destructive',
   declined: 'bg-destructive/10 text-destructive',

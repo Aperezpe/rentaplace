@@ -21,19 +21,20 @@ export default async function HostReservations({ searchParams }: { searchParams:
   const page = Math.max(1, Number(param(sp, 'page') || 1));
   const all = reservations(db(), user) as Row[];
   const filtered = all.filter((b) => status === 'all' ? true : status === 'upcoming' ? b.to_date >= today() && ['confirmed', 'pending'].includes(b.status) : b.status === status);
+  if (status === 'upcoming') filtered.sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1) || a.from_date.localeCompare(b.from_date));
   const pages = Math.max(1, Math.ceil(filtered.length / 30));
   const items = filtered.slice((page - 1) * 30, page * 30);
   return (
     <Page>
       <PageHeading eyebrow="Every stay, in one place" title="Welcome what’s next." description="Review requests and keep an eye on your upcoming guests." />
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-1.5" role="list" aria-label="Show reservations">
+        <nav className="flex flex-wrap gap-1.5" aria-label="Show reservations">
           {FILTERS.map((f) => (
             <Button key={f} asChild size="sm" variant={f === status ? 'default' : 'outline'} className="rounded-full">
               <Link href={`/host/reservations?status=${f}`} aria-current={f === status ? 'page' : undefined}>{capitalize(f)}</Link>
             </Button>
           ))}
-        </div>
+        </nav>
         <p className="text-sm text-muted-foreground">{plural(filtered.length, 'reservation')} · Page {page} of {pages}</p>
       </div>
       {items.length ? (

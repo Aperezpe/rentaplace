@@ -23,7 +23,7 @@ export default function HomePage() {
       <section className="relative">
         <div className="relative isolate overflow-hidden">
           <img src="/img/scenes/wide-lake.jpg" alt="A small cabin and dock on a still mountain lake at dawn" width={1916} height={821} fetchPriority="high" className="absolute inset-0 -z-10 size-full object-cover object-[70%_center]" />
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-background via-background/80 to-background/0 sm:via-background/55" />
+          <div className="hero-wash absolute inset-0 -z-10" />
           <div className="mx-auto max-w-7xl px-4 pt-16 pb-36 sm:px-6 sm:pt-24 sm:pb-44 lg:px-8">
             <div className="max-w-xl space-y-5">
               <p className="eyebrow">Good places. Unhurried days.</p>

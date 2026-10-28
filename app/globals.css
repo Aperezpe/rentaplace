@@ -27,6 +27,10 @@
   --sand: #efe9dc;
   --sage: #c9d6c4;
   --pending: #d8bf7a;
+  --pending-foreground: #6b5414;
+  --on-primary-accent: #b9c9b3;
+  --blocked: #b5b9ab;
+  --blocked-soft: #e1e3d8;
   --chart-1: #214c40;
   --chart-2: #6f9583;
   --chart-3: #c9d6c4;
@@ -58,6 +62,8 @@
   --color-sand: var(--sand);
   --color-sage: var(--sage);
   --color-pending: var(--pending);
+  --color-pending-foreground: var(--pending-foreground);
+  --color-on-primary-accent: var(--on-primary-accent);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -103,6 +109,16 @@
 @layer components {
   .eyebrow {
     @apply text-xs font-semibold tracking-[0.16em] text-primary uppercase;
+  }
+  /* Keeps hero text legible over photography: a top-down wash on phones, where the
+     text spans the full width, and a left-to-right wash once the text has its own column. */
+  .hero-wash {
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--background) 94%, transparent) 0%, color-mix(in oklab, var(--background) 86%, transparent) 62%, color-mix(in oklab, var(--background) 20%, transparent) 100%);
+  }
+  @media (min-width: 40rem) {
+    .hero-wash {
+      background: linear-gradient(to right, var(--background) 0%, color-mix(in oklab, var(--background) 82%, transparent) 45%, transparent 85%);
+    }
   }
   .bg-topo {
     background-image: url("/img/scenes/pattern-topo.jpg");
