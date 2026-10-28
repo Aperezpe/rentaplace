@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
-import { resolve } from 'node:path';
-export const ROOT = fileURLToPath(new URL('../', import.meta.url));
+import { dirname, resolve } from 'node:path';
+// RAP_ROOT is set by the HTTP server so bundled page code resolves the same project root.
+export const ROOT = process.env.RAP_ROOT || resolve(dirname(fileURLToPath(import.meta.url)), '..');
+process.env.RAP_ROOT ||= ROOT;
 export const DB_PATH = process.env.RAP_DB || resolve(ROOT, 'data/rentaplace.db');
 export const LOG_DIR = process.env.RAP_LOG_DIR || resolve(ROOT, 'logs');
 export const OUTBOX_DIR = process.env.RAP_OUTBOX_DIR || resolve(ROOT, 'outbox');

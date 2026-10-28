@@ -15,12 +15,12 @@
 /src/domain/calendar.ts @johnlindquist
 /src/domain/listings.ts @johnlindquist
 /src/domain/host.ts @johnlindquist
-/src/pages/host.ts @johnlindquist
-/public/js/calendar.js @johnlindquist
+/app/host/ @johnlindquist
+/web/components/portfolio-calendar.tsx @johnlindquist
 # Support and feedback
 /src/domain/support.ts @johnlindquist
 /src/domain/feedback.ts @johnlindquist
-/src/pages/admin.ts @johnlindquist
+/app/admin/ @johnlindquist
 # Shared platform
 /src/server.ts @johnlindquist
 /src/router.ts @johnlindquist

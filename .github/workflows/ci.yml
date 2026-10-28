@@ -8,18 +8,26 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
       - name: Seed deterministic data
         run: npm run seed
       - name: Test
         run: npm test
+      - name: Type check
+        run: npm run typecheck
+      - name: Build pages
+        run: npm run build
       - name: Start server
         run: |
           npm start > /tmp/rentaplace-ci.log 2>&1 &
           echo $! > /tmp/rentaplace-ci.pid
-          node --input-type=module -e 'for(let i=0;i<30;i++){try{const r=await fetch("http://127.0.0.1:5180/api/health");if(r.ok)process.exit(0)}catch{}await new Promise(r=>setTimeout(r,200))}process.exit(1)'
+          node --input-type=module -e 'for(let i=0;i<100;i++){try{const r=await fetch("http://127.0.0.1:5180/api/health");if(r.ok)process.exit(0)}catch{}await new Promise(r=>setTimeout(r,200))}process.exit(1)'
       - name: Guest and host journey
         run: npm run journey
       - name: Search benchmark

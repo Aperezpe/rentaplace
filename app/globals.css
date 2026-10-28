@@ -1,0 +1,114 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* RentAPlace: calm getaway. Warm paper, deep pine green, sand and sage. */
+:root {
+  --radius: 0.875rem;
+  --background: #faf9f5;
+  --foreground: #23372f;
+  --card: #ffffff;
+  --card-foreground: #23372f;
+  --popover: #ffffff;
+  --popover-foreground: #23372f;
+  --primary: #214c40;
+  --primary-foreground: #fbfaf6;
+  --secondary: #eef2e9;
+  --secondary-foreground: #214c40;
+  --muted: #f2f0e8;
+  --muted-foreground: #5f6b63;
+  --accent: #efe9dc;
+  --accent-foreground: #23372f;
+  --destructive: #b4432f;
+  --border: #e2e1d6;
+  --input: #d9dace;
+  --ring: #6f9583;
+  --sand: #efe9dc;
+  --sage: #c9d6c4;
+  --pending: #d8bf7a;
+  --chart-1: #214c40;
+  --chart-2: #6f9583;
+  --chart-3: #c9d6c4;
+  --chart-4: #d8bf7a;
+  --chart-5: #a3693f;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sand: var(--sand);
+  --color-sage: var(--sage);
+  --color-pending: var(--pending);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: calc(var(--radius) - 2px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 8px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-serif tracking-tight;
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply text-xs font-semibold tracking-[0.16em] text-primary uppercase;
+  }
+  .bg-topo {
+    background-image: url("/img/scenes/pattern-topo.jpg");
+    background-size: cover;
+    background-position: center;
+  }
+  .bg-botanical {
+    background-image: url("/img/scenes/pattern-botanical.jpg");
+    background-size: 900px auto;
+  }
+  .bg-paper {
+    background-image: url("/img/scenes/pattern-paper.jpg");
+    background-size: cover;
+  }
+  .bg-waves {
+    background-image: url("/img/scenes/pattern-waves.jpg");
+    background-size: cover;
+    background-position: center;
+  }
+}

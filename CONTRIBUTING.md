@@ -1,6 +1,6 @@
 # Contributing
 
-Keep changes focused on a user-visible problem. Describe the observed behavior, the desired result, and how you checked it. Preserve the zero-dependency stack and direct TypeScript execution on Node 24 and 25.
+Keep changes focused on a user-visible problem. Describe the observed behavior, the desired result, and how you checked it. Keep runtime dependencies to the page layer (Next.js, React, Tailwind, shadcn/ui) and direct TypeScript execution on Node 24 and 25.
 
 ## Before a change
 

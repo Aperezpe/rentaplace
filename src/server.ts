@@ -21,13 +21,20 @@ import { hostPayouts, payoutsCsv } from './domain/payouts.ts';
 import { createTicket, tickets } from './domain/support.ts';
 import { createFeedback } from './domain/feedback.ts';
 import { flags, setFlag } from './flags.ts';
-import { homePage, searchPage, detailPage, checkoutPage, confirmationPage, tripsPage, helpPage, signInPage, cancelPage } from './pages/guest.ts';
-import { hostHomePage, hostListingsPage, listingEditorPage, hostCalendarPage, hostReservationsPage, hostPayoutsPage } from './pages/host.ts';
-import { adminPage, stats, health } from './pages/admin.ts';
-import { errorPage } from './pages/layout.ts';
+import { stats, health } from './domain/ops.ts';
+import { startPages, type Pages } from './pages.ts';
 import { openapi } from './openapi.ts';
 
-export function createApp(db: DatabaseSync = bootstrap()) {
+
+function isLocal(req: http.IncomingMessage) {return ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');}
+/** The local page a form was posted from, for sending the person back with a message. */
+function refererPath(req: http.IncomingMessage) {
+ try {const ref=new URL(req.headers.referer || '/');return safeNext(ref.pathname+ref.search);} catch {return '/';}
+}
+function withError(path:string,message:string) {const next=new URL(path,'http://localhost');next.searchParams.delete('saved');next.searchParams.set('error',message);return next.pathname+next.search;}
+
+/** The HTTP app: JSON API, form posts, images and logs. Pages, when attached, render every other GET. */
+export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  const router=new Router();
  const home=(slug:string)=>{const h=listingBySlug(db,slug);if(!h)throw new AppError(404,'NOT_FOUND','We could not find that home.');return h;};
  const host=(ctx:Context)=>requireUser(ctx.user,'host');
@@ -68,37 +75,20 @@ export function createApp(db: DatabaseSync = bootstrap()) {
  api('GET','/api/flags',ctx=>{localOnly(ctx.req);return {items:flags(db)};});
  api('PATCH','/api/flags/:name',ctx=>{localOnly(ctx.req);const result=setFlag(db,ctx.params.name,ctx.body.enabled);log('flag.updated',result);return result;});
  api('GET','/api/logs',ctx=>{localOnly(ctx.req);return {items:readLogs({slow:ctx.url.searchParams.get('slow')==='1',errors:ctx.url.searchParams.get('errors')==='1',limit:integer(ctx.url.searchParams.get('limit')||100,'Limit',1,1000)})};});
- router.on('GET','/',ctx=>html(ctx.res,homePage(db,ctx.user)));
- router.on('GET','/search',ctx=>{const result=search(db,parseSearch(ctx.url.searchParams));ctx.res.setHeader('Server-Timing',`search;dur=${result.searchMs}`);html(ctx.res,searchPage(db,ctx.url,result,ctx.user));});
- router.on('GET','/homes/:slug',ctx=>html(ctx.res,detailPage(db,ctx.url,home(ctx.params.slug),ctx.user)));
- router.on('GET','/book/:slug',ctx=>html(ctx.res,checkoutPage(db,ctx.url,home(ctx.params.slug),ctx.user)));
  router.on('POST','/book/:slug',ctx=>{requireValue(ctx.body.agree==='1','Please review the house rules and cancellation policy.');const result=createBooking(db,{...ctx.body,slug:ctx.params.slug},ctx.user);redirect(ctx.res,`/bookings/${result.booking.id}`);});
- router.on('GET','/bookings/:id',ctx=>html(ctx.res,confirmationPage(db,guestBooking(db,ctx.params.id,ctx.user),ctx.user)));
- router.on('GET','/trips',ctx=>html(ctx.res,tripsPage(db,guestBookings(db,ctx.user),requireUser(ctx.user,'guest'))));
- router.on('GET','/trips/:id/cancel',ctx=>{const b=guestBooking(db,ctx.params.id,ctx.user);requireValue(['confirmed','pending'].includes(b.status)&&b.from_date>=today(),'This reservation can no longer be cancelled online.');html(ctx.res,cancelPage(db,b,requireUser(ctx.user,'guest')));});
  router.on('POST','/trips/:id/cancel',ctx=>{cancelBooking(db,ctx.params.id,ctx.user);redirect(ctx.res,'/trips?saved=1');});
- router.on('GET','/help',ctx=>html(ctx.res,helpPage(db,ctx.user,ctx.url.searchParams.get('received')||undefined)));
  router.on('POST','/help',ctx=>{const t=createTicket(db,ctx.body,ctx.user);redirect(ctx.res,`/help?received=${t.id}`);});
  router.on('POST','/feedback',ctx=>{const f=createFeedback(db,ctx.body,ctx.user);const next=new URL(safeNext(ctx.body.next || f.page),'http://localhost');next.searchParams.set('feedback','1');redirect(ctx.res,next.pathname+next.search);});
- router.on('GET','/signin',ctx=>html(ctx.res,signInPage(db,safeNext(ctx.url.searchParams.get('next')),ctx.user)));
  router.on('POST','/auth/signin',ctx=>{const u=signIn(db,String(ctx.body.userId),ctx.res);const next=safeNext(ctx.body.next);redirect(ctx.res,next==='/'&&u.role==='host'?'/host':next);});
  router.on('POST','/auth/signout',ctx=>{signOut(ctx.res);redirect(ctx.res,'/');});
- router.on('GET','/host',ctx=>html(ctx.res,hostHomePage(db,dashboard(db,ctx.user),host(ctx))));
- router.on('GET','/host/listings',ctx=>html(ctx.res,hostListingsPage(db,hostListings(db,ctx.user),host(ctx))));
- router.on('GET','/host/listings/new',ctx=>html(ctx.res,listingEditorPage(db,undefined,host(ctx))));
  router.on('POST','/host/listings/new',ctx=>{const h=saveListing(db,ctx.body,ctx.user);redirect(ctx.res,`/host/listings/${h.slug}/edit?saved=1`);});
- router.on('GET','/host/listings/:slug/edit',ctx=>html(ctx.res,listingEditorPage(db,ownedListing(db,ctx.params.slug,ctx.user),host(ctx))));
  router.on('POST','/host/listings/:slug/edit',ctx=>{saveListing(db,ctx.body,ctx.user,ctx.params.slug);redirect(ctx.res,`/host/listings/${ctx.params.slug}/edit?saved=1`);});
- router.on('GET','/host/calendar',ctx=>{const month=ctx.url.searchParams.get('month') || today().slice(0,7),slug=ctx.url.searchParams.get('slug') || undefined;html(ctx.res,hostCalendarPage(db,hostCalendar(db,ctx.user,month,slug),hostListings(db,ctx.user),host(ctx),slug));});
  router.on('POST','/host/calendar/block',ctx=>{const block=blockDates(db,ctx.user,ctx.body);redirect(ctx.res,`/host/calendar?slug=${encodeURIComponent(block.slug)}&month=${block.from.slice(0,7)}&saved=1`);});
  router.on('POST','/host/calendar/unblock/:id',ctx=>{unblockDates(db,ctx.user,ctx.params.id);redirect(ctx.res,'/host/calendar?saved=1');});
- router.on('GET','/host/reservations',ctx=>html(ctx.res,hostReservationsPage(db,reservations(db,ctx.user),host(ctx),ctx.url)));
  router.on('POST','/host/reservations/:id/respond',ctx=>{respondToReservation(db,ctx.params.id,String(ctx.body.action),ctx.user);redirect(ctx.res,'/host/reservations?saved=1');});
- router.on('GET','/host/payouts',ctx=>html(ctx.res,hostPayoutsPage(db,hostPayouts(db,host(ctx).id),host(ctx),ctx.url)));
  router.on('GET','/host/payouts.csv',sendCsv);
- router.on('GET','/admin',ctx=>{localOnly(ctx.req);html(ctx.res,adminPage(db,ctx.user));});
  router.on('POST','/admin/flags/:name',ctx=>{localOnly(ctx.req);const result=setFlag(db,ctx.params.name,ctx.body.enabled==='1');log('flag.updated',result);redirect(ctx.res,'/admin?saved=1');});
- const ASSET_TYPES:Record<string,string>={css:'text/css',js:'text/javascript',svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',webp:'image/webp',ico:'image/x-icon'};
+ const ASSET_TYPES:Record<string,string>={svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',webp:'image/webp',ico:'image/x-icon'};
  // Loopback, any *.localhost name (local dev proxies) and hosts listed in RAP_ALLOWED_HOSTS.
  const EXTRA_HOSTS=(process.env.RAP_ALLOWED_HOSTS || '').split(',').map(h=>h.trim().toLowerCase()).filter(Boolean);
  function allowedHost(header:string):boolean {
@@ -109,9 +99,8 @@ export function createApp(db: DatabaseSync = bootstrap()) {
    const start=performance.now(),requestId=randomUUID(),method=req.method || 'GET';
    const url=new URL(req.url || '/',`http://127.0.0.1:${PORT}`);
    res.setHeader('X-Request-Id',requestId);res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
-   res.setHeader('Content-Security-Policy',"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
-   res.setHeader('Cache-Control','no-store');
-   res.on('finish',()=>log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
+   const quiet=url.pathname.startsWith('/_next/') || url.pathname.startsWith('/__nextjs');
+   if(!quiet)res.on('finish',()=>log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
    let user;
    try {
      const hostHeader=req.headers.host || '';
@@ -121,31 +110,43 @@ export function createApp(db: DatabaseSync = bootstrap()) {
        if(originHost!==hostHeader)throw new AppError(403,'ORIGIN_NOT_ALLOWED','This request must come from this local site.');
      }
      user=sessionUser(req,db);
-     if(method==='HEAD')req.method='GET';
-     const asset=req.method==='GET' && /^\/(css|js|img)\/([a-z0-9-]+\/)*[a-z0-9.-]+\.(css|js|svg|png|jpg|webp|ico)$/.exec(url.pathname);
+     const routeMethod=method==='HEAD'?'GET':method;
+     const asset=routeMethod==='GET' && /^\/img\/([a-z0-9-]+\/)*[a-z0-9.-]+\.(svg|png|jpg|webp|ico)$/.exec(url.pathname);
      if(asset && !url.pathname.includes('..')) {
        const path=join(ROOT,'public',url.pathname);
        if(!existsSync(path))throw new AppError(404,'NOT_FOUND','Asset not found.');
-       const ext=asset[3],type=ASSET_TYPES[ext];
-       const binary=['png','jpg','webp','ico'].includes(ext);
-       res.writeHead(200,{'Content-Type':binary?type:`${type}; charset=utf-8`,'Cache-Control':binary?'public, max-age=86400':'public, max-age=60'});res.end(readFileSync(path));return;
+       res.writeHead(200,{'Content-Type':ASSET_TYPES[asset[2]],'Cache-Control':'public, max-age=86400'});res.end(method==='HEAD'?undefined:readFileSync(path));return;
      }
-     await router.dispatch({req,res,db,url,params:{},user,body:await readBody(req),requestId});
+     if(router.matches(routeMethod,url.pathname) || url.pathname.startsWith('/api/') || !pages) {
+       res.setHeader('Content-Security-Policy',"default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
+       res.setHeader('Cache-Control','no-store');
+       if(method==='HEAD')req.method='GET';
+       await router.dispatch({req,res,db,url,params:{},user,body:await readBody(req),requestId});
+       return;
+     }
+     // Pages only see a trustworthy "local" marker: set here from the socket, never taken from the client.
+     delete req.headers['x-rap-local'];
+     if(isLocal(req))req.headers['x-rap-local']='1';
+     await pages.handle(req,res);
    } catch(error) {
      const err=error instanceof AppError?error:new AppError(error instanceof URIError?400:500,error instanceof URIError?'BAD_PATH':'INTERNAL_ERROR',error instanceof URIError?'Invalid URL encoding.':'Something went wrong. Please try again.');
      if(err.status>=500)log('request.failed',{requestId,message:error instanceof Error?error.message:'Unknown error'});
      if(!res.headersSent) {
        if(url.pathname.startsWith('/api/'))json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
-       else if(err.status===401 && method==='GET')redirect(res,`/signin?next=${encodeURIComponent(url.pathname+url.search)}`);
-       else html(res,errorPage(err.status,err.message,user,url.pathname+url.search),err.status);
+       else if(err.status===401)redirect(res,`/signin?next=${encodeURIComponent(method==='GET'?url.pathname+url.search:refererPath(req))}`);
+       else if(method!=='GET' && method!=='HEAD')redirect(res,withError(refererPath(req),err.message));
+       else json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
      } else res.end();
    }
  });
+ if(pages)server.on('upgrade',(req,socket,head)=>{if(allowedHost(req.headers.host || ''))pages.upgrade(req,socket,head);else socket.destroy();});
  return {server,db,router};
 }
 if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
- const {server,db}=createApp();flushOutbox(db);
- server.listen(PORT,'127.0.0.1',()=>log('server.started',{host:'127.0.0.1',port:PORT,url:`http://127.0.0.1:${PORT}`,today:today()}));
+ const db=bootstrap();
+ const pages=await startPages(db,PORT);
+ const {server}=createApp(db,pages);flushOutbox(db);
+ server.listen(PORT,'127.0.0.1',()=>log('server.started',{host:'127.0.0.1',port:PORT,url:`http://127.0.0.1:${PORT}`,today:today(),pages:pages?pages.mode:'off'}));
  server.on('error',error=>{log('server.failed',{message:error.message});process.exitCode=1;db.close();});
- for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{server.close(()=>{db.close();process.exit(0);});});
+ for(const signal of ['SIGINT','SIGTERM'])process.on(signal,()=>{server.close(()=>{db.close();process.exit(0);});setTimeout(()=>process.exit(0),2000).unref();});
 }

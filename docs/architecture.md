@@ -1,6 +1,6 @@
 # Architecture and ownership
 
-RentAPlace is a single local process. Node's HTTP server dispatches into a small router. JSON endpoints and server-rendered pages call the same domain functions. Pages are enhanced by two small browser modules, and all visual assets are served from `public/`.
+RentAPlace is a single local process. Node's HTTP server dispatches into a small router. JSON endpoints, form posts and images are handled by the router; every other page request goes to Next.js (App Router, React Server Components) running inside the same process with the same database connection. Both call the same domain functions. Pages are enhanced by two small browser modules, and all visual assets are served from `public/`.
 
 ## Module boundaries
 
@@ -8,10 +8,10 @@ RentAPlace is a single local process. Node's HTTP server dispatches into a small
 | --- | --- | --- |
 | Discovery | `src/domain/search.ts`, search page functions, `test/search.test.ts`, `test/bench.ts` | Filtering, sort order, availability, pagination, timings |
 | Pricing and reservations | `src/domain/pricing.ts`, `bookings.ts`, `cancellation.ts`, `payouts.ts`, pricing and booking tests | Integer money, checkout transaction, refunds, host share |
-| Host tools | `src/domain/listings.ts`, `calendar.ts`, `host.ts`, `src/pages/host.ts`, `public/js/calendar.js`, `test/host.test.ts` | Ownership, editor validation, calendar, reservation response |
+| Host tools | `src/domain/listings.ts`, `calendar.ts`, `host.ts`, `app/host/`, `web/components/portfolio-calendar.tsx`, `test/host.test.ts` | Ownership, editor validation, calendar, reservation response |
 | Support and feedback | `src/domain/support.ts`, `feedback.ts`, operations page, `test/operations.test.ts` | Inbox persistence, page context, feature gates |
 | Platform | `src/server.ts`, `router.ts`, `db.ts`, `auth.ts`, `log.ts`, `flags.ts`, `db/migrations/` | HTTP boundaries, schema, signed sessions, observability |
-| Shared presentation | `src/pages/layout.ts`, `public/css/`, `public/img/` | Accessible controls, responsive layout, original illustrations |
+| Shared presentation | `app/layout.tsx`, `app/globals.css`, `web/components/`, `public/img/` | shadcn/ui components on Tailwind, accessible controls, responsive layout, generated photography |
 
 CODEOWNERS identifies the repository owner for these paths. A change that crosses areas should describe the cross-module assumptions in its review.
 

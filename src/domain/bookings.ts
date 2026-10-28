@@ -37,7 +37,7 @@ export function flushOutbox(db: DatabaseSync,outDir=OUTBOX_DIR) {
 }
 function queueConfirmation(db: DatabaseSync,booking:any,title:string) {
   const id=randomUUID();
-  db.prepare('INSERT INTO email_outbox (id,booking_id,payload,status,created_at) VALUES (?,?,?,?,?)').run(id,booking.id,JSON.stringify({to:booking.guest_email,subject:`Your ${title} reservation · ${booking.reference}`,reference:booking.reference,home:title,from:booking.from_date,to:booking.to_date,status:booking.status,totalCents:booking.total_cents,currency:'USD',payment:'Demo payment. No money was charged.',createdAt:now()}),'pending',now());
+  db.prepare('INSERT INTO email_outbox (id,booking_id,payload,status,created_at) VALUES (?,?,?,?,?)').run(id,booking.id,JSON.stringify({to:booking.guest_email,subject:`Your ${title} reservation · ${booking.reference}`,reference:booking.reference,home:title,checkIn:booking.from_date,checkOut:booking.to_date,status:booking.status,totalCents:booking.total_cents,currency:'USD',payment:'Demo payment. No money was charged.',createdAt:now()}),'pending',now());
 }
 export function createBooking(db: DatabaseSync,input: any,account: Account | undefined) {
   const user=requireUser(account,'guest');

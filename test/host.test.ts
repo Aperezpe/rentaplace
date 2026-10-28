@@ -6,7 +6,7 @@ import { quote,createBooking } from '../src/domain/bookings.ts';
 import { hostListings,saveListing,ownedListing,dollarsToCents } from '../src/domain/listings.ts';
 import { dashboard,reservations } from '../src/domain/host.ts';
 import { payoutsCsv,hostPayouts } from '../src/domain/payouts.ts';
-const newHome={title:'Willow Cottage',description:'A fictional cottage beside a quiet meadow.',neighbourhood:'Fern Way',region:'Oregon Coast',sleeps:4,bedrooms:2,beds:3,bathrooms:1,nightlyCents:13500,weekendCents:16000,cleaningCents:5000,cancellationPolicy:'flexible',status:'active',instantBook:true,amenities:['Wifi','Kitchen'],photos:['/img/coast-0.svg']};
+const newHome={title:'Willow Cottage',description:'A fictional cottage beside a quiet meadow.',neighbourhood:'Fern Way',region:'Oregon Coast',sleeps:4,bedrooms:2,beds:3,bathrooms:1,nightlyCents:13500,weekendCents:16000,cleaningCents:5000,cancellationPolicy:'flexible',status:'active',instantBook:true,amenities:['Wifi','Kitchen'],photos:['/img/photos/coast-0.jpg']};
 test('a host can create and edit a listing, with ownership enforced',()=>{
  const {db}=fixture();const saved=saveListing(db,newHome,host);assert.equal(saved.host_id,host.id);assert.equal(saved.nightly_cents,13500);const updated=saveListing(db,{...newHome,title:'Willow House',nightlyCents:14500},host,saved.slug);assert.equal(updated.nightly_cents,14500);assert.equal(updated.slug,saved.slug);assert.throws(()=>saveListing(db,newHome,otherHost,saved.slug),{status:404});assert.throws(()=>ownedListing(db,saved.slug,guest),{status:403});assert.equal(hostListings(db,host).length,3);db.close();
 });

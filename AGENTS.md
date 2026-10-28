@@ -1,6 +1,6 @@
 # RentAPlace
 
-A local vacation rental marketplace built with Node 24+, erasable TypeScript, native HTTP and SQLite. No dependency installation or compilation is required.
+A local vacation rental marketplace built with Node 24+, erasable TypeScript, native HTTP and SQLite. Pages are Next.js (App Router) with Tailwind CSS and shadcn/ui components. Run `pnpm install` once.
 
 - `npm run dev` starts the server. `npm run seed` resets the local database; stop the server first.
 - Run `npm test`, `npm run bench`, and `npm run journey` against a running server.
@@ -9,3 +9,15 @@ A local vacation rental marketplace built with Node 24+, erasable TypeScript, na
 - Keep page output escaped and preserve host and guest ownership checks.
 - Module boundaries and review responsibilities are in `docs/architecture.md`.
 - Change the implementation to satisfy an assertion when the assertion describes the correct user-visible behavior.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
+- UI: pages live in `app/`, shared components in `web/components/` (shadcn/ui primitives in `web/components/ui/`, added with `pnpm dlx shadcn@latest add <name>`). Pages read data through the same domain functions as the JSON API (`src/domain/`). Theme tokens are in `app/globals.css`.
+- `npm run typecheck` checks types; `npm run build` builds the pages for `npm start`.

@@ -11,6 +11,7 @@ export class Router {
     const pattern=new RegExp('^'+path.split('/').map(part=>{if(part.startsWith(':')){names.push(part.slice(1));return '([^/]+)';}return part.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}).join('/')+'/?$');
     this.routes.push({method,pattern,names,handler});
   }
+  matches(method:string,pathname:string):boolean {return this.routes.some(r=>r.method===method && r.pattern.test(pathname));}
   async dispatch(ctx: Context) {
     for(const route of this.routes) {
       const match=route.pattern.exec(ctx.url.pathname);

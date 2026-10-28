@@ -2,13 +2,14 @@
 
 A vacation rental marketplace for finding a place, planning a stay, and welcoming guests. Guests can search, inspect prices, reserve with a demo payment, manage trips, and ask for help. Hosts can edit homes, manage calendars, review requests, and export payouts.
 
-All homes, accounts, reservations, and reviews are fictional. The geographic regions are real; the neighbourhoods and homes are invented. Every illustration is original SVG artwork included in this repository. No real payments, external email, telemetry, or remote assets are used.
+All homes, accounts, reservations, and reviews are fictional. The geographic regions are real; the neighbourhoods and homes are invented. Home photos, portraits and scenery are AI-generated and stored in this repository. No real payments, external email, telemetry, or remote assets are used.
 
 ## Get started
 
-Requires **Node 24 or 25**. There are no packages to install and no build step.
+Requires **Node 24 or 25** and pnpm.
 
 ```sh
+pnpm install
 npm run seed
 npm run dev
 ```
