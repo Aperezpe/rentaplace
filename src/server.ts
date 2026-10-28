@@ -98,6 +98,13 @@ export function createApp(db: DatabaseSync = bootstrap()) {
  router.on('GET','/host/payouts.csv',sendCsv);
  router.on('GET','/admin',ctx=>{localOnly(ctx.req);html(ctx.res,adminPage(db,ctx.user));});
  router.on('POST','/admin/flags/:name',ctx=>{localOnly(ctx.req);const result=setFlag(db,ctx.params.name,ctx.body.enabled==='1');log('flag.updated',result);redirect(ctx.res,'/admin?saved=1');});
+ const ASSET_TYPES:Record<string,string>={css:'text/css',js:'text/javascript',svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',webp:'image/webp',ico:'image/x-icon'};
+ // Loopback, any *.localhost name (local dev proxies) and hosts listed in RAP_ALLOWED_HOSTS.
+ const EXTRA_HOSTS=(process.env.RAP_ALLOWED_HOSTS || '').split(',').map(h=>h.trim().toLowerCase()).filter(Boolean);
+ function allowedHost(header:string):boolean {
+   const host=header.toLowerCase().replace(/:\d+$/,'');
+   return /^(127\.0\.0\.1|localhost|\[::1\])$/.test(host) || /^([a-z0-9-]+\.)+localhost$/.test(host) || EXTRA_HOSTS.includes(host);
+ }
  const server=http.createServer(async(req,res)=>{
    const start=performance.now(),requestId=randomUUID(),method=req.method || 'GET';
    const url=new URL(req.url || '/',`http://127.0.0.1:${PORT}`);
@@ -108,18 +115,20 @@ export function createApp(db: DatabaseSync = bootstrap()) {
    let user;
    try {
      const hostHeader=req.headers.host || '';
-     if(!/^(127\.0\.0\.1|localhost|\[::1\])(:\d+)?$/.test(hostHeader))throw new AppError(403,'HOST_NOT_ALLOWED','Use the local server address.');
+     if(!allowedHost(hostHeader))throw new AppError(403,'HOST_NOT_ALLOWED','Use the local server address.');
      if(['POST','PUT','PATCH','DELETE'].includes(method) && req.headers.origin) {
        let originHost='';try{originHost=new URL(req.headers.origin).host;}catch{}
        if(originHost!==hostHeader)throw new AppError(403,'ORIGIN_NOT_ALLOWED','This request must come from this local site.');
      }
      user=sessionUser(req,db);
      if(method==='HEAD')req.method='GET';
-     if(req.method==='GET' && /^\/(css|js|img)\/[a-z0-9.-]+\.(css|js|svg)$/.test(url.pathname)) {
+     const asset=req.method==='GET' && /^\/(css|js|img)\/([a-z0-9-]+\/)*[a-z0-9.-]+\.(css|js|svg|png|jpg|webp|ico)$/.exec(url.pathname);
+     if(asset && !url.pathname.includes('..')) {
        const path=join(ROOT,'public',url.pathname);
        if(!existsSync(path))throw new AppError(404,'NOT_FOUND','Asset not found.');
-       const type=url.pathname.endsWith('.css')?'text/css':url.pathname.endsWith('.js')?'text/javascript':'image/svg+xml';
-       res.writeHead(200,{'Content-Type':`${type}; charset=utf-8`,'Cache-Control':'public, max-age=60'});res.end(readFileSync(path));return;
+       const ext=asset[3],type=ASSET_TYPES[ext];
+       const binary=['png','jpg','webp','ico'].includes(ext);
+       res.writeHead(200,{'Content-Type':binary?type:`${type}; charset=utf-8`,'Cache-Control':binary?'public, max-age=86400':'public, max-age=60'});res.end(readFileSync(path));return;
      }
      await router.dispatch({req,res,db,url,params:{},user,body:await readBody(req),requestId});
    } catch(error) {
