@@ -14,7 +14,7 @@ npm run seed
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173** and choose **Demo sign-in**. If the database is missing, the server creates and seeds it automatically.
+Open **http://127.0.0.1:5180** and choose **Demo sign-in**. If the database is missing, the server creates and seeds it automatically.
 
 Useful demo accounts:
 
