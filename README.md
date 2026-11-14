@@ -28,6 +28,18 @@ Useful demo accounts:
 
 The application date is **2026-11-09**. Choose November 10–13 for an available Lakeside A-Frame stay. Use the demo card **4242 4242 4242 4242** at checkout; the card number is never persisted.
 
+## Use it with the MEGA lab
+
+RentAPlace is the sample project in MEGA.dev S04E01. [`lab-scenarios.md`](lab-scenarios.md) holds the two first checks from that lesson, and [`GLOSSARY.md`](GLOSSARY.md) the words it quotes. To follow along with John's own tools for [Pi](https://github.com/earendil-works/pi) and [Herdr](https://github.com/herdrdev/herdr-app), install the three extensions. Nothing in the app needs them.
+
+```sh
+pi install git:github.com/johnlindquist/herdr-pi-split            # /split
+pi install git:github.com/johnlindquist/herdr-pi-lab              # /lab
+pi install --local git:github.com/johnlindquist/herdr-pi-role     # /agent, in this project
+```
+
+Run the third line in this folder, then `/reload` in Pi. `/lab doctor` should answer `Lab workspace ready · lab harness ready`. Then ask Main: `Use the lab to run the first check in lab-scenarios.md`. `/lab new critic` and `/lab test critic` need the third line. The lab works on a copy of this project in `~/.lab/rentaplace`; its reports land in `lab-reports/` and `agents/`. `.pi/` and `lab-reports/` are ignored by Git here.
+
 ## Commands
 
 ```sh
