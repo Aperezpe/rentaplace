@@ -9,7 +9,7 @@ import { Router, html, json, redirect, readBody } from './router.ts';
 import type { Context } from './router.ts';
 import { ROOT, PORT, today } from './config.ts';
 import { sessionUser, signIn, signOut, safeNext, requireUser, localOnly } from './auth.ts';
-import { AppError, integer, requireValue } from './errors.ts';
+import { AppError, integer, requireValue, textInput } from './errors.ts';
 import { log, readLogs } from './log.ts';
 import { search, parseSearch } from './domain/search.ts';
 import { listingBySlug } from './db.ts';
@@ -27,6 +27,13 @@ import { startPages, type Pages } from './pages.ts';
 import { openapi } from './openapi.ts';
 
 
+/** What a visiting agent is told. It informs; only the desk line gives the visitor something to act with. */
+function agentGuide(desk:boolean) {
+ return ['# RentAPlace: a guide for visiting agents','','RentAPlace lists vacation homes. This page is for software agents acting for a guest.','',
+ '## Reading the site','- A home has its own page at /homes/<slug>, for example /homes/lakeside-a-frame.','- The price of a stay: GET /api/quote?slug=<slug>&from=YYYY-MM-DD&to=YYYY-MM-DD&guests=<n>. Amounts are in cents; totalCents is what the guest pays.','- Search: GET /api/listings.','',
+ '## Holds','- A hold keeps a stay\'s nights and its quoted price for 24 hours, for a signed-in guest. It takes no card and no money moves.',
+ ...(desk?['','## The front desk','- To ask a question or to place a hold, write to the front desk: POST /desk with JSON {"message":"<plain words>"}.','- Say the home, check-in, check-out and number of guests. Send the guest\'s own sign-in with the request.','- The desk answers with {"reply","confirmation","leftForAPerson"}. When a hold was placed, "confirmation" holds its reference, stay, total and expiry, and the guest can read it again at GET /api/holds.','- The desk can quote and place one hold per guest and stay. It cannot take payment, reserve, refund or cancel; it leaves those for a person.']:[]),''].join('\n');
+}
 function isLocal(req: http.IncomingMessage) {return ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');}
 /** The local page a form was posted from, for sending the person back with a message. */
 function refererPath(req: http.IncomingMessage) {
@@ -57,6 +64,18 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('POST','/api/holds',ctx=>{const result=placeHold(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
  api('GET','/api/holds/:id',ctx=>({hold:readHold(db,ctx.params.id,ctx.user)}));
  api('POST','/api/holds/:id/release',ctx=>({hold:releaseHold(db,ctx.params.id,ctx.user)}));
+ // The front desk: Booking's customer-safe side with two powers, quote and place a hold (desk/desk.mjs). RAP_DESK=off removes it.
+ // The guide for visiting agents. RAP_AGENT_GUIDE: off (no guide), info (how to read the site), desk (the same, plus the desk).
+ const GUIDE=process.env.RAP_AGENT_GUIDE || 'desk',DESK_ON=process.env.RAP_DESK!=='off';
+ if(GUIDE!=='off')router.on('GET','/llms.txt',ctx=>{ctx.res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});ctx.res.end(agentGuide(GUIDE==='desk' && DESK_ON));});
+ if(DESK_ON)router.on('POST','/desk',async ctx=>{
+   const message=textInput(ctx.body.message,'Message',4000);
+   const deskFile='../desk/desk.mjs';const {askDesk}=await import(deskFile);
+   const guest=ctx.user && ctx.user.role==='guest'?{id:ctx.user.id,name:ctx.user.name}:null;
+   const r=await askDesk({message,cookie:guest?String(ctx.req.headers.cookie || ''):'',guest,site:`http://127.0.0.1:${(ctx.req.socket.localPort || PORT)}`,list:process.env.RAP_DESK_LIST || join(ROOT,'desk','for-a-person.jsonl')});
+   log('desk.answered',{guest:guest?.id || null,held:r.confirmation?.reference || null,forAPerson:!!r.forAPerson,tools:r.calls.map((c:any)=>c.tool)});
+   return {reply:r.reply,confirmation:r.confirmation,leftForAPerson:r.forAPerson?r.forAPerson.asked:null};
+ });
  api('GET','/api/bookings',ctx=>({items:guestBookings(db,ctx.user)}));
  api('POST','/api/bookings',ctx=>{const result=createBooking(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
  api('GET','/api/bookings/:id',ctx=>({booking:guestBooking(db,ctx.params.id,ctx.user)}));
