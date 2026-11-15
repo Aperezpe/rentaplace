@@ -12,6 +12,7 @@ Why prices work the way they do. One line each, every line names where it came f
 ## Customer-facing
 
 - The first price a guest sees is the price they pay. (`GLOSSARY.md`, Quote; decision 0002)
+- A 24-hour hold saves the whole quote when it is placed, and reserving the held stay uses those saved amounts, not the listing's current prices. Pricing code is not called again. (commit eba6d8c; `createBooking` in `src/domain/bookings.ts`; `test/holds.test.ts`)
 - The service fee is never refunded on a partial refund. (`GLOSSARY.md`, Service fee; `policyText` in `src/domain/cancellation.ts`)
 - A guest disputed a moderate-policy refund five days before check-in; the amount at exactly five days is under review. (tracker card `refund-window`, Checking)
 - The 12%, 8% and 3% rates are fixed demo rules, not tax advice. (`docs/architecture.md`, Money and time)

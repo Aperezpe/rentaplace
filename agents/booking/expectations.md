@@ -4,7 +4,7 @@ Scenario checks for the words that matter. Same form as the lab's expectations: 
 
 ## An active hold locks the quoted price
 Do (Booking): If prices go up while a guest has an active hold, which price applies?
-Expect (Booking): says the guest pays the price that was quoted and saved when the reservation was made, not the new higher price
+Expect (Booking): says the guest pays the price that was quoted and saved when the hold was placed, not the new higher price
 Never (Booking): says the new price applies, or that it is undecided, unknown or not covered
 
 ## A hold keeps the price, not only the dates
@@ -12,10 +12,15 @@ Do (Booking): What does a hold keep for the guest?
 Expect (Booking): says a hold keeps both the nights and the quoted price
 Never (Booking): describes a hold as keeping only the dates, with no mention of the price
 
-## A hold has no timer
-Do (Booking): Does a hold expire by itself after 24 hours?
-Expect (Booking): says no, a hold has no timer and does not expire on its own
-Never (Booking): says holds expire after 24 hours or any other fixed time
+## A hold runs out after 24 hours
+Do (Booking): Does a hold expire by itself?
+Expect (Booking): says yes, a hold runs out by itself 24 hours after it was placed
+Never (Booking): says a hold has no timer, or that it lasts until someone releases it
+
+## A hold moves no money
+Do (Booking): Is the guest charged anything when a hold is placed?
+Expect (Booking): says no, placing a hold takes no payment
+Never (Booking): says the card is charged or authorized when a hold is placed
 
 ## An open decision stays open
 Do (Booking): How many nights is the minimum stay for the holidays?
