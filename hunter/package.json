@@ -1,0 +1,12 @@
+{
+  "name": "rentaplace-hunter-host",
+  "private": true,
+  "type": "module",
+  "description": "Day 4: a local durable host that wakes the error hunter from RentAPlace's own log.",
+  "dependencies": {
+    "@earendil-works/chord": "^1.3.0",
+    "@earendil-works/pi-ai": "^1.3.0",
+    "@earendil-works/pi-durable": "^1.3.0",
+    "durable-harness": "0.0.1-beta.6"
+  }
+}
