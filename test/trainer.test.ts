@@ -68,3 +68,11 @@ test('the sealed run counts toward the spend cap: if it would cross the cap it i
   assert.match(r.stopped, /the sealed cases were not run: spend cap reached/);
   assert.ok(r.spent <= 0.25);
 });
+
+test('caps that are not real numbers are refused, so a cap can never be switched off by a bad value', async () => {
+  const run = (o: object) => train({ start, score: async () => scoreOf(2), propose: async () => ({ reply: draft('x'), cost: 0 }), sealed: async () => ({ of: 6, failed: 0, cost: 0 }), ...o });
+  await assert.rejects(run({ budget: NaN }), /budget must be/);
+  await assert.rejects(run({ budget: 0 }), /budget must be/);
+  await assert.rejects(run({ rounds: NaN }), /rounds must be/);
+  await assert.rejects(run({ rounds: 2.5 }), /rounds must be/);
+});

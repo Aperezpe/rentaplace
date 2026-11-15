@@ -52,6 +52,15 @@ test('an owned change runs the everyday checks, then the sealed cases when the s
   assert.deepEqual(started, [['pricing', '--repeat', '2']]);
 });
 
+test('an agent whose expectations were deleted is still picked, and no sealed folder is said aloud', () => {
+  const root = project(); fs.rmSync(path.join(root, 'agents/booking/expectations.md')); fs.writeFileSync(path.join(root, 'agents/booking/agent.md'), '# Booking');
+  assert.deepEqual(Object.keys(agentsFor(['agents/booking/glossary.md'], root)), ['booking']);
+  const said: string[] = [];
+  onChange({ files: ['agents/booking/glossary.md'], root, run: () => 2, log: (l: string) => said.push(l) });
+  assert.ok(said.some(l => /sealed cases were NOT run/.test(l)));
+  assert.match(said.at(-1)!, /FAILED: booking everyday \(exit 2\)/);
+});
+
 test('a failing check makes the whole run fail and names what failed', () => {
   const root = project(); const said: string[] = [];
   const r = onChange({ files: ['desk/desk.mjs'], root, run: () => 1, log: (l: string) => said.push(l) });

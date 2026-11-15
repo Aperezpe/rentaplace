@@ -9,7 +9,9 @@
 // - It proposes one whole glossary per round. A malformed proposal is rejected before any scoring. Only glossary.md
 //   can change: memories, Job and code are out of its reach because nothing it writes is copied anywhere else.
 // - Each draft is scored on the everyday checks by the same runner (bin/agent-checks.mjs). It stops when a draft
-//   clears every everyday check, or it runs out of rounds, or the spend cap is reached. Both caps are hard.
+//   clears every everyday check, or it runs out of rounds, or the spend cap is reached. The round cap is exact. The
+//   spend cap stops a step from starting when the last step of its kind would cross it; one step that costs more
+//   than the one before can still go over by that difference.
 // - The best draft is then run ONCE on the sealed cases. A second sealed run for the same run ID is refused.
 // - Nothing is kept. The result is recorded in $RAP_SEALED_DIR/results/<ID>.json and the draft waits in
 //   <run dir>/candidate for bin/two-keys.mjs (the checks pass AND a person approves).
@@ -47,6 +49,8 @@ const summary = s => ({ of: s.checks.length, failed: s.checks.filter(c => c.pass
  *   sealed(glossary)        -> { of, failed, cost } called at most once, after the loop, on the best draft
  */
 export async function train({ start, score, propose, sealed, rounds = 3, budget = 0.75, log = () => {} }) {
+  if (!Number.isInteger(rounds) || rounds < 0) throw Error(`rounds must be a whole number, got ${rounds}`);
+  if (!Number.isFinite(budget) || budget <= 0) throw Error(`budget must be an amount above zero, got ${budget}`);
   let spent = 0; const history = []; let stopped = '';
   // The spend cap is hard: a step is not started when the last step of its kind would take the total past the cap.
   let proposeCost = 0;
@@ -109,9 +113,14 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
       return { checks: list, cleared: list.filter(c => c.passed === c.of).length, passed: list.reduce((a, c) => a + c.passed, 0), cost: j.cost };
     };
     const sealed = async glossary => { const j = checks(glossary, ['--cases', path.join(sealedDir, `${name}.md`), '--sealed'], path.join(sealedDir, 'results', `${run}-sealed-detail.json`)); return { of: j.cases, failed: j.failed, cost: j.cost }; };
+    // Every title and question of the sealed cases: none may ever appear in what the Trainer is sent.
+    const sealedMarks = fs.readFileSync(path.join(sealedDir, `${name}.md`), 'utf8').split('\n').map(l => (l.match(/^##\s+(.+)$/) || l.match(/^Do[^:]*:\s*(.+)$/) || [])[1]).filter(Boolean);
     const SYSTEM = `You are the Trainer. You improve one file, the glossary of a domain agent, so the agent answers correctly. You can only propose: reply with the whole new glossary in one fenced code block and nothing else is used. Keep every term. Define what words mean; do not paste questions or expected answers into it. Keep it as short as it can be while every practice check passes. You get ${rounds} rounds at most.`;
     const propose = ({ glossary, checks: cs, round }) => new Promise((resolve, reject) => {
       const prompt = `Round ${round} of ${rounds}.\n\nThe agent's job:\n${read('agent.md')}\n\nIts memories (you cannot change these):\n${read('memories.md')}\n\nThe practice checks (you may study them):\n${read('expectations.md')}\n\nHow the current glossary scored on the practice checks, runs passed of runs made:\n${cs.map(c => `- ${c.title}: ${c.passed} of ${c.of}`).join('\n')}\n\nThe current glossary:\n\`\`\`\n${glossary}\`\`\`\n\nReply with the whole improved glossary in one fenced code block.`;
+      fs.writeFileSync(path.join(out, `prompt-${round}.txt`), `${SYSTEM}\n\n${prompt}`);
+      const leaked = sealedMarks.filter(m => `${SYSTEM}\n${prompt}`.includes(m));
+      if (leaked.length) return reject(Error('a sealed case reached the Trainer\'s prompt; stopping'));
       const child = spawn(process.env.PI_BIN || 'pi', ['-p', '--mode', 'json', '--no-session', '-ne', '-ns', '-np', '-nc', '--no-mcp', '--no-tools', '--thinking', 'off', '--model', MODEL, '--system-prompt', SYSTEM, prompt], { cwd: os.tmpdir(), env: { ...process.env, PI_SKIP_VERSION_CHECK: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
       let o = ''; child.stdout.on('data', d => o += d); child.on('error', reject);
       child.on('close', () => { let reply = '', cost = 0, used = ''; for (const line of o.split('\n')) { let e; try { e = JSON.parse(line); } catch { continue; } if (e.type === 'message_end' && e.message?.role === 'assistant') { reply = (e.message.content || []).filter(c => c.type === 'text').map(c => c.text).join(''); cost += e.message.usage?.cost?.total || 0; used = `${e.message.provider}/${e.message.model}`; } }

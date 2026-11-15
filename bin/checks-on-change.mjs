@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Runs an agent's checks when its files change, without anyone asking. Started by the local Git hook
-// (.githooks/post-commit) after every commit; can also be run by hand.
+// (.githooks/post-commit after every commit, .githooks/post-merge after a pull or merge); can also be run by hand.
 //   node bin/checks-on-change.mjs                 files changed by the last commit
 //   node bin/checks-on-change.mjs --since REF     files changed since REF
 //   node bin/checks-on-change.mjs --files a b …   these files
@@ -27,7 +27,7 @@ export function agentsFor(files, root) {
   const dir = path.join(root, 'agents'), out = {};
   if (!fs.existsSync(dir)) return out;
   for (const name of fs.readdirSync(dir).sort()) {
-    if (!fs.existsSync(path.join(dir, name, 'expectations.md'))) continue;
+    if (!fs.existsSync(path.join(dir, name, 'expectations.md')) && !fs.existsSync(path.join(dir, name, 'agent.md'))) continue; // an agent whose expectations were deleted still runs, and fails
     const ownsFile = path.join(dir, name, 'owns.txt');
     const globs = fs.existsSync(ownsFile) ? fs.readFileSync(ownsFile, 'utf8').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#')) : [];
     const mine = files.filter(f => f.startsWith(`agents/${name}/`) || globs.some(g => matches(g, f)));
@@ -47,6 +47,7 @@ export function onChange({ files, root, sealedDir, repeat = 2, run, log = consol
     const everyday = run([name, '--repeat', String(repeat)]);
     runs.push({ agent: name, kind: 'everyday', exit: everyday });
     const sealed = sealedDir && path.join(sealedDir, `${name}.md`);
+    if (!sealedDir) log('checks-on-change: no sealed folder is set (RAP_SEALED_DIR), so the sealed cases were NOT run.');
     if (sealed && fs.existsSync(sealed)) runs.push({ agent: name, kind: 'sealed', exit: run([name, '--cases', sealed, '--sealed', '--repeat', String(repeat)]) });
   }
   const ok = runs.every(r => r.exit === 0);
@@ -63,6 +64,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     let files;
     if (i >= 0) files = args.slice(i + 1);
     else if (s >= 0) files = git('diff', '--name-only', args[s + 1]).split('\n').filter(Boolean);
+    else if (spawnSync('git', ['rev-parse', '--verify', '-q', 'HEAD^1']).status === 0) files = git('diff', '--name-only', 'HEAD^1', 'HEAD').split('\n').filter(Boolean); // also right for a merge commit
     else files = git('diff-tree', '--no-commit-id', '--name-only', '-r', '--root', 'HEAD').split('\n').filter(Boolean);
     const runner = process.env.AGENT_CHECKS_BIN || path.join(HERE, 'agent-checks.mjs');
     const run = a => spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', runner, ...a], { cwd: root, stdio: 'inherit' }).status ?? 2;

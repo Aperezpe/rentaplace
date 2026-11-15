@@ -88,7 +88,8 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
       const runner = path.join(path.dirname(fileURLToPath(import.meta.url)), 'agent-checks.mjs'), repeat = process.env.CHECKS_REPEAT || '3';
       const one = (extra, file) => { const r = spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', runner, name, '--project', candidate, '--repeat', repeat, '--json', file, ...extra], { stdio: ['ignore', 'inherit', 'inherit'] }); if (r.status === 2 || !fs.existsSync(file)) throw Error('the checks run broke'); const j = JSON.parse(fs.readFileSync(file, 'utf8')); return { of: j.cases, failed: j.failed }; };
       fs.mkdirSync(path.dirname(record), { recursive: true });
-      const everyday = one([], path.join(sealedDir, 'results', `${run}-everyday-detail.json`));
+      // The everyday checks are the live project's, not the candidate's own copy: a candidate cannot pass by bringing easier checks.
+      const everyday = one(['--cases', path.join(agentDir(root, name), 'expectations.md')], path.join(sealedDir, 'results', `${run}-everyday-detail.json`));
       const sealed = one(['--cases', path.join(sealedDir, `${name}.md`), '--sealed'], path.join(sealedDir, 'results', `${run}-sealed-detail.json`));
       fs.writeFileSync(record, JSON.stringify({ run, agent: name, version, at: new Date().toISOString(), everyday, sealed }, null, 2));
       console.log(`Recorded for ${name} version ${version}: everyday ${everyday.of - everyday.failed} of ${everyday.of} cleared, sealed ${sealed.of - sealed.failed} of ${sealed.of} cleared.`); process.exit(everyday.failed || sealed.failed ? 1 : 0);
