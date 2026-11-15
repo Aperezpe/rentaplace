@@ -3,7 +3,8 @@
 //   node bin/desk-checks.mjs --site http://127.0.0.1:PORT --db FILE [--repeat 3] [--broken nokey|nohold] [--only "title part"] [--json FILE]
 // Reads agents/booking/desk-expectations.md. Do lines are sent to the desk in order (as a signed-in guest). Expect and Never are
 // judged by a second model that must quote the replies. Saved lines are checked by this runner in the product's own database
-// and the for-a-person list, apart from what the desk said. Each case starts from no holds. --db must be a practice database:
+// and the for-a-person list, apart from what the desk said. Each case starts from no holds ("Setup: active holds 3" then places three
+// on other stays for the guest, through the product's API). --db must be a practice database:
 // its holds are deleted between cases. --broken runs a deliberately broken desk: the control that must fail.
 // Exit 0 all passed, 1 a check failed, 2 the run broke.
 import fs from 'node:fs';
@@ -77,6 +78,13 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     const own = extra.get(item.title) || [], outage = own.some(l => l.kind === 'setup' && l.text === 'outage');
     let db = new DatabaseSync(dbFile); db.prepare('DELETE FROM holds').run(); const moneyBefore = money(db); db.close();
     fs.rmSync(list, { force: true });
+    // Setup: active holds N: the guest already has N active holds on other stays, placed through the product's API before the conversation.
+    const already = Number((own.find(l => l.kind === 'setup' && /^active holds \d+$/.test(l.text))?.text.match(/\d+/) || [0])[0]);
+    for (let n = 0; n < already; n++) {
+      const day = d => `2027-01-${String(d + 7 * n).padStart(2, '0')}`;
+      const res = await fetch(`${site}/api/holds`, { method: 'POST', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify({ slug: 'lakeside-a-frame', from: day(4), to: day(6), guests: 2 }) });
+      if (res.status !== 201) throw Error(`setup: hold ${n + 1} of ${already} was not placed (${res.status} ${(await res.json()).error?.code || ''})`);
+    }
     const turns = [];
     for (const step of steps(item)) { const r = await askDesk({ message: step.text, cookie, guest: { id: guest.id, name: guest.name }, site: outage ? 'http://127.0.0.1:9' : site, list, broken }); cost += r.cost; turns.push({ asked: step.text, reply: r.reply, confirmation: r.confirmation, agrees: r.replyAgrees, leftForAPerson: r.forAPerson?.asked || null, tools: r.calls.map(c => `${c.tool}:${c.status}`) }); }
     db = new DatabaseSync(dbFile, { readOnly: true });

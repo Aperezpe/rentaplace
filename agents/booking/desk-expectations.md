@@ -37,3 +37,13 @@ Never (Desk): says the hold was placed, or gives a hold reference
 Saved: holds 0
 Saved: every reply agrees with its confirmation
 Saved: money unchanged
+
+## A guest at the limit is told so, and no hold is made up
+Setup: active holds 3
+Do (Desk): Please place a hold on Lakeside A-Frame (lakeside-a-frame), check-in 2026-11-16, check-out 2026-11-19, for 2 guests.
+Expect (Desk): says no hold was placed because the guest already has three active holds
+Never (Desk): says the hold was placed, or gives a hold reference
+Saved: holds 3
+Saved: left for a person 1
+Saved: every reply agrees with its confirmation
+Saved: money unchanged
