@@ -32,7 +32,7 @@ function agentGuide(desk:boolean) {
  return ['# RentAPlace: a guide for visiting agents','','RentAPlace lists vacation homes. This page is for software agents acting for a guest.','',
  '## Reading the site','- A home has its own page at /homes/<slug>, for example /homes/lakeside-a-frame.','- The price of a stay: GET /api/quote?slug=<slug>&from=YYYY-MM-DD&to=YYYY-MM-DD&guests=<n>. Amounts are in cents; totalCents is what the guest pays.','- Search: GET /api/listings.','',
  '## Holds','- A hold keeps a stay\'s nights and its quoted price for 24 hours, for a signed-in guest. It takes no card and no money moves.',
- ...(desk?['','## The front desk','- To ask a question or to place a hold, write to the front desk: POST /desk with JSON {"message":"<plain words>"}.','- Say the home, check-in, check-out and number of guests. Send the guest\'s own sign-in with the request.','- The desk answers with {"reply","confirmation","leftForAPerson"}. When a hold was placed, "confirmation" holds its reference, stay, total and expiry, and the guest can read it again at GET /api/holds.','- The desk can quote and place one hold per guest and stay. It cannot take payment, reserve, refund or cancel; it leaves those for a person.']:[]),''].join('\n');
+ ...(desk?['','## The front desk','- To ask a question or to place a hold, write to the front desk: POST /desk with JSON {"message":"<plain words>"}.','- Say the home, check-in, check-out and number of guests. Send the guest\'s own sign-in with the request.','- The desk answers with {"reply","confirmation","replyAgreesWithConfirmation","leftForAPerson"}. When a hold was placed, "confirmation" holds its reference, stay, total and expiry, and the guest can read it again at GET /api/holds. Trust "confirmation", which comes from the saved record; "reply" is words. If "replyAgreesWithConfirmation" is false, the words and the record differ: go by the record.','- The desk can quote and place one hold per guest and stay. It cannot take payment, reserve, refund or cancel; it leaves those for a person.']:[]),''].join('\n');
 }
 function isLocal(req: http.IncomingMessage) {return ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');}
 /** The local page a form was posted from, for sending the person back with a message. */
@@ -73,8 +73,8 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
    const deskFile='../desk/desk.mjs';const {askDesk}=await import(deskFile);
    const guest=ctx.user && ctx.user.role==='guest'?{id:ctx.user.id,name:ctx.user.name}:null;
    const r=await askDesk({message,cookie:guest?String(ctx.req.headers.cookie || ''):'',guest,site:`http://127.0.0.1:${(ctx.req.socket.localPort || PORT)}`,list:process.env.RAP_DESK_LIST || join(ROOT,'desk','for-a-person.jsonl')});
-   log('desk.answered',{guest:guest?.id || null,held:r.confirmation?.reference || null,forAPerson:!!r.forAPerson,tools:r.calls.map((c:any)=>c.tool)});
-   return {reply:r.reply,confirmation:r.confirmation,leftForAPerson:r.forAPerson?r.forAPerson.asked:null};
+   log('desk.answered',{guest:guest?.id || null,held:r.confirmation?.reference || null,forAPerson:!!r.forAPerson,replyAgrees:r.replyAgrees.ok,tools:r.calls.map((c:any)=>c.tool)});
+   return {reply:r.reply,confirmation:r.confirmation,replyAgreesWithConfirmation:r.replyAgrees.ok,leftForAPerson:r.forAPerson?r.forAPerson.asked:null};
  });
  api('GET','/api/bookings',ctx=>({items:guestBookings(db,ctx.user)}));
  api('POST','/api/bookings',ctx=>{const result=createBooking(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});

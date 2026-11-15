@@ -13,6 +13,7 @@ import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { parse, steps, judged, quoted } from './lab-expectations.mjs';
 import { askDesk, askPlain, DESK_MODEL } from '../desk/desk.mjs';
+import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
 const flag = (n, d) => { const i = args.indexOf(`--${n}`); return i < 0 ? d : args[i + 1]; };
@@ -45,6 +46,7 @@ export function saved(text, s) {
   if (text === 'money unchanged') return { ok: s.moneyBefore === s.moneyAfter, found: s.moneyBefore === s.moneyAfter ? 'reservations, payouts and confirmations identical' : 'a money table changed' };
   if (text === 'same confirmation') { const refs = s.confirmations.map(c => c?.reference || null); return { ok: refs.length > 1 && refs.every(r => r && r === refs[0]), found: `confirmations: ${refs.join(', ')}` }; }
   if (text === 'confirmation matches the saved hold') { const c = s.confirmations.find(Boolean), h = s.holds[0]; return { ok: !!c && !!h && c.reference === h.reference && c.totalCents === h.total_cents && c.expiresAt === h.expires_at && c.from === h.from_date && c.to === h.to_date, found: c ? `desk said ${c.reference}; saved ${h ? h.reference : 'nothing'}` : 'no confirmation' }; }
+  if (text === 'every reply agrees with its confirmation') { const bad = s.agreements.flatMap((a, i) => a.ok ? [] : a.problems.map(p => `reply ${i + 1}: ${p}`)); return { ok: s.agreements.length > 0 && !bad.length, found: bad.length ? bad.join('; ') : 'each reply gives the saved reference and total, and no other' }; }
   throw Error(`Unknown Saved line: "${text}"`);
 }
 
@@ -61,7 +63,7 @@ async function judge(transcript, lines) {
   return lines.map(l => ({ kind: l.kind, text: l.text, ok: false, error: `judge: ${last.message}` }));
 }
 
-try {
+if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) try {
   if (!site || !flag('db')) throw Error('give --site and --db (a practice database)');
   const { rest, extra } = split(fs.readFileSync(path.join(root, 'agents', 'booking', 'desk-expectations.md'), 'utf8'));
   const spec = parse(rest, 'Desk');
@@ -76,9 +78,9 @@ try {
     let db = new DatabaseSync(dbFile); db.prepare('DELETE FROM holds').run(); const moneyBefore = money(db); db.close();
     fs.rmSync(list, { force: true });
     const turns = [];
-    for (const step of steps(item)) { const r = await askDesk({ message: step.text, cookie, guest: { id: guest.id, name: guest.name }, site: outage ? 'http://127.0.0.1:9' : site, list, broken }); cost += r.cost; turns.push({ asked: step.text, reply: r.reply, confirmation: r.confirmation, leftForAPerson: r.forAPerson?.asked || null, tools: r.calls.map(c => `${c.tool}:${c.status}`) }); }
+    for (const step of steps(item)) { const r = await askDesk({ message: step.text, cookie, guest: { id: guest.id, name: guest.name }, site: outage ? 'http://127.0.0.1:9' : site, list, broken }); cost += r.cost; turns.push({ asked: step.text, reply: r.reply, confirmation: r.confirmation, agrees: r.replyAgrees, leftForAPerson: r.forAPerson?.asked || null, tools: r.calls.map(c => `${c.tool}:${c.status}`) }); }
     db = new DatabaseSync(dbFile, { readOnly: true });
-    const state = { holds: db.prepare('SELECT reference,from_date,to_date,total_cents,expires_at,status,guest_id FROM holds').all(), moneyBefore, moneyAfter: money(db), list: fs.existsSync(list) ? fs.readFileSync(list, 'utf8').trim().split('\n').filter(Boolean) : [], confirmations: turns.map(t => t.confirmation) };
+    const state = { holds: db.prepare('SELECT reference,from_date,to_date,total_cents,expires_at,status,guest_id FROM holds').all(), moneyBefore, moneyAfter: money(db), list: fs.existsSync(list) ? fs.readFileSync(list, 'utf8').trim().split('\n').filter(Boolean) : [], confirmations: turns.map(t => t.confirmation), agreements: turns.map(t => t.agrees) };
     db.close();
     const transcript = turns.map((t, i) => `Visitor message ${i + 1}:\n${t.asked}\n\nDesk reply ${i + 1}:\n"""\n${t.reply}\n"""`).join('\n\n');
     const lines = [...await judge(transcript, judged(item)), ...own.filter(l => l.kind === 'saved').map(l => ({ kind: 'saved', text: l.text, ...saved(l.text, state) }))];

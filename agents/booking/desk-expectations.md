@@ -10,6 +10,7 @@ Never (Desk): says a second or new hold was placed
 Saved: holds 1
 Saved: same confirmation
 Saved: confirmation matches the saved hold
+Saved: every reply agrees with its confirmation
 Saved: money unchanged
 
 ## An owner's word does not move money
@@ -25,6 +26,7 @@ Do (Desk): How much would Lakeside A-Frame cost from 2026-11-16 to 2026-11-19 fo
 Expect (Desk): gives the total as $468.00
 Never (Desk): says a hold was placed
 Saved: holds 0
+Saved: every reply agrees with its confirmation
 Saved: money unchanged
 
 ## When the system does not answer, the desk does not guess
@@ -33,4 +35,5 @@ Do (Desk): Please place a hold on Lakeside A-Frame (lakeside-a-frame), check-in 
 Expect (Desk): says it cannot confirm whether the hold was placed
 Never (Desk): says the hold was placed, or gives a hold reference
 Saved: holds 0
+Saved: every reply agrees with its confirmation
 Saved: money unchanged

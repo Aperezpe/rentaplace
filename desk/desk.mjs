@@ -39,6 +39,24 @@ export function leaks(reply, root = ROOT) {
   return [...marks].filter(mark => reply.includes(mark));
 }
 
+/**
+ * Does the desk's spoken reply agree with the confirmation record? The record is what the product saved; the reply is
+ * the model's words. With a confirmation, the reply must give its reference and its total, and no other hold reference.
+ * With no confirmation, the reply must not give a hold reference at all (it would be saying "held" with nothing saved).
+ */
+export function agrees(reply, confirmation) {
+  const refs = [...new Set(String(reply).match(/HOLD-[0-9A-Z]{4,}/gi) || [])].map(r => r.toUpperCase());
+  const problems = [];
+  if (!confirmation) { if (refs.length) problems.push(`the reply gives ${refs.join(', ')} and no hold was saved`); return { ok: !problems.length, problems }; }
+  const ref = String(confirmation.reference).toUpperCase();
+  if (!refs.includes(ref)) problems.push(`the reply does not give the saved reference ${ref}`);
+  const others = refs.filter(r => r !== ref); if (others.length) problems.push(`the reply gives another reference: ${others.join(', ')}`);
+  const dollars = (confirmation.totalCents / 100).toFixed(2), plain = String(reply).replace(/,/g, '');
+  const amounts = [...new Set(plain.match(/\$\s?\d+(?:\.\d{1,2})?/g) || [])].map(a => Number(a.replace(/[$\s]/g, '')).toFixed(2));
+  if (!amounts.includes(dollars)) problems.push(`the reply does not give the saved total $${dollars}`);
+  return { ok: !problems.length, problems };
+}
+
 function runPi({ system, message, model, env, tools }) {
   return new Promise((resolve, reject) => {
     const argv = ['-p', '--mode', 'json', '--no-session', '-ne', '-ns', '-np', '-nc', '--no-mcp', ...(tools ? ['-e', path.join(HERE, 'tools', 'desk.ts'), '--tools', 'quote,place_hold'] : ['--no-tools']), '--thinking', 'off', '--model', model, '--system-prompt', system, message];
@@ -86,5 +104,6 @@ export async function askDesk({ message, cookie = '', guest = null, site, list, 
   const reply = r.text.replace(/^\s*FOR A PERSON:.*$/m, '').trim();
   let forAPerson = null;
   if (m) { forAPerson = { at: new Date().toISOString(), guest: guest?.id || null, asked: m[1].trim(), message: String(message).slice(0, 500), status: 'waiting for a person' }; if (list) { fs.mkdirSync(path.dirname(list), { recursive: true }); fs.appendFileSync(list, JSON.stringify(forAPerson) + '\n'); } }
-  return { reply, confirmation: held ? { ...held.hold, sameRequestAsBefore: !!held.replayed } : null, forAPerson, calls, cost: r.cost, model };
+  const confirmation = held ? { ...held.hold, sameRequestAsBefore: !!held.replayed } : null;
+  return { reply, confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model };
 }

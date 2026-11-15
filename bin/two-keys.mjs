@@ -2,6 +2,7 @@
 // Two keys: a changed agent is kept only when (1) the checks passed on exactly this version, everyday and sealed,
 // and (2) a person approved exactly this version. Either key alone is refused, and the version kept before is saved
 // so it can be put back.
+//   node bin/two-keys.mjs check   <agent> <candidate dir> --run ID       run the everyday checks and the sealed cases on it, once, and record the result
 //   node bin/two-keys.mjs status  <agent> <candidate dir> --run ID       what is missing
 //   node bin/two-keys.mjs approve <agent> <candidate dir> --by "Name"    a person's yes, for this exact version
 //   node bin/two-keys.mjs keep    <agent> <candidate dir> --run ID       keep it, if both keys are there
@@ -12,6 +13,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const FILES = ['agent.md', 'glossary.md', 'memories.md', 'desk.md'];
@@ -69,7 +71,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
     const run = flag('run'), by = flag('by'), root = path.resolve(flag('project') || process.cwd());
     const sealedDir = process.env.RAP_SEALED_DIR; if (!sealedDir) throw Error('set RAP_SEALED_DIR (the sealed folder holds results and approvals)');
     const [verb, name, candidateArg] = args;
-    if (!verb || !name) throw Error('usage: two-keys.mjs status|approve|keep|restore <agent> [candidate dir] [--run ID] [--by Name]');
+    if (!verb || !name) throw Error('usage: two-keys.mjs check|status|approve|keep|restore <agent> [candidate dir] [--run ID] [--by Name]');
     const previous = run && path.join(sealedDir, 'previous', run);
     if (verb === 'restore') { if (!run) throw Error('give --run ID'); console.log(`Put back version ${restore({ root, name, previous })} of ${name}.`); process.exit(0); }
     const candidate = path.resolve(candidateArg || ''); if (!candidateArg || !fs.existsSync(agentDir(candidate, name))) throw Error(`no agents/${name}/ in the candidate dir`);
@@ -81,6 +83,16 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
       console.log(`${by} approved ${name} version ${version}.`); process.exit(0);
     }
     if (!run) throw Error('give --run ID (the recorded check run)');
+    if (verb === 'check') {
+      const record = resultFile(sealedDir, run); if (fs.existsSync(record)) throw Error(`run ${run} already has a recorded result; the sealed cases are run once per run`);
+      const runner = path.join(path.dirname(fileURLToPath(import.meta.url)), 'agent-checks.mjs'), repeat = process.env.CHECKS_REPEAT || '3';
+      const one = (extra, file) => { const r = spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', runner, name, '--project', candidate, '--repeat', repeat, '--json', file, ...extra], { stdio: ['ignore', 'inherit', 'inherit'] }); if (r.status === 2 || !fs.existsSync(file)) throw Error('the checks run broke'); const j = JSON.parse(fs.readFileSync(file, 'utf8')); return { of: j.cases, failed: j.failed }; };
+      fs.mkdirSync(path.dirname(record), { recursive: true });
+      const everyday = one([], path.join(sealedDir, 'results', `${run}-everyday-detail.json`));
+      const sealed = one(['--cases', path.join(sealedDir, `${name}.md`), '--sealed'], path.join(sealedDir, 'results', `${run}-sealed-detail.json`));
+      fs.writeFileSync(record, JSON.stringify({ run, agent: name, version, at: new Date().toISOString(), everyday, sealed }, null, 2));
+      console.log(`Recorded for ${name} version ${version}: everyday ${everyday.of - everyday.failed} of ${everyday.of} cleared, sealed ${sealed.of - sealed.failed} of ${sealed.of} cleared.`); process.exit(everyday.failed || sealed.failed ? 1 : 0);
+    }
     const result = readJson(resultFile(sealedDir, run)), approval = readJson(approvalFile(sealedDir, name, version));
     if (verb === 'status') { const d = decide({ version, result, approval }); console.log(`${name} version ${version}: checks ${d.checksPassed ? 'passed' : 'NOT passed'} · person ${d.approved ? `approved (${approval.by})` : 'has NOT approved'}${d.reasons.length ? `\n  ${d.reasons.join('\n  ')}` : ''}\n${d.keep ? 'Both keys are there: it can be kept.' : 'It cannot be kept.'}`); process.exit(d.keep ? 0 : 1); }
     if (verb === 'keep') {

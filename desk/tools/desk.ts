@@ -4,7 +4,7 @@
 // itself: the model never chooses it, so the same request twice is the same key.
 // DESK_BROKEN (controls for the desk checks only): "nokey" sends no request key; "nohold" answers as if held and saves nothing.
 import { appendFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { requestKey } from '../request-key.mjs';
 import { Type } from 'typebox';
 const SITE = (process.env.DESK_SITE || '').replace(/\/$/, '');
 const BROKEN = process.env.DESK_BROKEN || '';
@@ -17,7 +17,6 @@ async function call(method: string, path: string, body?: object) {
   } catch (e: any) { return { status: 0, data: { error: { code: 'NO_ANSWER', message: 'The reservation system did not answer. Nothing is known about this request.' } } }; }
 }
 const text = (value: object) => ({ content: [{ type: 'text', text: JSON.stringify(value) }], details: {} });
-export function requestKey(guest: string, p: any) { return 'desk-' + createHash('sha256').update([guest, p.slug, p.from, p.to, Number(p.guests)].join('|')).digest('hex').slice(0, 32); }
 export default function desk(pi: any) {
   pi.registerTool({
     name: 'quote', label: 'Quote', description: 'Read the price of one stay from the reservation system. Read-only. Amounts are in cents.', parameters: Type.Object(stay),
