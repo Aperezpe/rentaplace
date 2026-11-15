@@ -22,6 +22,11 @@ Do (Booking): Is the guest charged anything when a hold is placed?
 Expect (Booking): says no, placing a hold takes no payment
 Never (Booking): says the card is charged or authorized when a hold is placed
 
+## A guest can hold only a few stays at once
+Do (Booking): How many stays can one guest hold at the same time?
+Expect (Booking): says a guest can have at most three active holds at a time
+Never (Booking): says there is no limit, or gives a number other than three
+
 ## An open decision stays open
 Do (Booking): How many nights is the minimum stay for the holidays?
 Expect (Booking): says the minimum stay is not decided yet and that it is a product decision
