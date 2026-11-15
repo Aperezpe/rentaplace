@@ -7,6 +7,7 @@
 # Pricing and reservations
 /src/domain/pricing.ts @johnlindquist
 /src/domain/bookings.ts @johnlindquist
+/src/domain/holds.ts @johnlindquist
 /src/domain/cancellation.ts @johnlindquist
 /src/domain/payouts.ts @johnlindquist
 /test/pricing.test.ts @johnlindquist
@@ -27,6 +28,7 @@
 /db/ @johnlindquist
 /test/cancellation.test.ts @johnlindquist
 /test/hold-price.test.ts @johnlindquist
+/test/holds.test.ts @johnlindquist
 # Domain agents: a change to an agent's job, memories, glossary or scenario checks is reviewed by the people who own that domain
 /agents/booking/ @johnlindquist
 /agents/pricing/ @johnlindquist
