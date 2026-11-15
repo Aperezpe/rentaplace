@@ -1,0 +1,27 @@
+--- clean/src/domain/pricing.ts	2026-11-09 18:02:09
++++ bugA/src/domain/pricing.ts	2026-11-09 18:02:20
+@@ -15,12 +15,23 @@
+   const day = new Date(`${date}T00:00:00Z`).getUTCDay();
+   return day === 5 || day === 6;
+ }
++// Seasonal rates: percent of the listed nightly price, by calendar month.
++const SEASON: Record<string, { name: string; percent: number }> = {
++  '01': { name: 'winter', percent: 100 }, '02': { name: 'winter', percent: 100 }, '03': { name: 'spring', percent: 100 },
++  '04': { name: 'spring', percent: 100 }, '05': { name: 'spring', percent: 100 }, '06': { name: 'summer', percent: 100 },
++  '07': { name: 'summer', percent: 100 }, '08': { name: 'summer', percent: 100 }, '09': { name: 'autumn', percent: 100 },
++  '10': { name: 'autumn', percent: 100 }, '11': { name: 'autumn', percent: 100 }
++};
++function seasonalCents(date: string, cents: number): number {
++  const season = SEASON[date.slice(5, 7)];
++  return Math.round(cents * season.percent / 100);
++}
+ export function priceStay(home: Pick<Listing, 'slug' | 'sleeps' | 'nightly_cents' | 'weekend_cents' | 'cleaning_cents'>, from: string, to: string, guests = 2): Quote {
+   const nights = validateDates(from, to);
+   integer(guests, 'Guests', 1, home.sleeps);
+   const nightly = Array.from({ length: nights }, (_, i) => {
+     const date = addDays(from, i), weekend = isWeekend(date);
+-    return { date, weekend, cents: weekend ? home.weekend_cents : home.nightly_cents };
++    return { date, weekend, cents: seasonalCents(date, weekend ? home.weekend_cents : home.nightly_cents) };
+   });
+   const accommodationCents = nightly.reduce((n, line) => n + line.cents, 0);
+   const cleaningCents = home.cleaning_cents;

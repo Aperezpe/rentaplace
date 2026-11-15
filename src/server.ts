@@ -105,7 +105,7 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
    const url=new URL(req.url || '/',`http://127.0.0.1:${PORT}`);
    res.setHeader('X-Request-Id',requestId);res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
    const quiet=url.pathname.startsWith('/_next/') || url.pathname.startsWith('/__nextjs');
-   if(!quiet)res.on('finish',()=>log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
+   if(!quiet)res.on('finish',()=>log('http.request',{method,path:url.pathname,query:url.search,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
    let user;
    try {
      const hostHeader=req.headers.host || '';
