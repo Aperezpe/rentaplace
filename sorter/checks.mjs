@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // End-to-end checks for the sorter on arrival, on a copy of RentAPlace. usage: node sorter/checks.mjs <outFolder> <copyFolder> [model]
 // Real tickets are posted to the copy's own support form API; the sorter reads the copy's log and its inbox.
-import fs from 'node:fs'; import path from 'node:path'; import { spawn, spawnSync } from 'node:child_process'; import { createHash } from 'node:crypto'; import { fileURLToPath } from 'node:url';
+import fs from 'node:fs'; import http from 'node:http'; import path from 'node:path'; import { spawn, spawnSync } from 'node:child_process'; import { createHash } from 'node:crypto'; import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 const here = path.dirname(fileURLToPath(import.meta.url)); const root = path.resolve(here, '..');
 const out = path.resolve(process.argv[2]), copy = path.resolve(process.argv[3]), model = process.argv[4] || 'anthropic/claude-haiku-5-5';
@@ -17,7 +17,8 @@ async function up() {
   throw Error('the copy did not start');
 }
 async function down() { server.kill('SIGTERM'); await new Promise((r) => server.once('exit', r)); server = null; }
-const post = async (subject, message) => { const r = await fetch(`${base}/api/support`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ name: 'Check Guest', email: 'check.guest@example.test', subject, message }) }); if (r.status !== 201) throw Error(`ticket not accepted: ${r.status} ${await r.text()}`); return (await r.json()).ticket.id; };
+// A fresh connection per ticket: the copy drops idle connections, and fetch would reuse a dead one after a long model call (ECONNRESET).
+const post = (subject, message) => new Promise((resolve, reject) => { const body = JSON.stringify({ name: 'Check Guest', email: 'check.guest@example.test', subject, message }); const req = http.request(`${base}/api/support`, { method: 'POST', agent: false, headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } }, (res) => { let t = ''; res.on('data', (d) => t += d); res.on('end', () => res.statusCode === 201 ? resolve(JSON.parse(t).ticket.id) : reject(Error(`ticket not accepted: ${res.statusCode} ${t}`))); }); req.on('error', reject); req.end(body); });
 const sort = () => { const r = spawnSync(process.execPath, [path.join(root, 'bin/sort-tickets.mjs'), '--log', logFile, '--api', base, '--tags', tags, '--state', state, '--model', model], { encoding: 'utf8', env: process.env }); if (r.status !== 0) throw Error(r.stderr); return JSON.parse(r.stdout.trim().split('\n').pop()); };
 const tagRows = () => (fs.existsSync(tags) ? fs.readFileSync(tags, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : []);
 // What the sorter must never change: every ticket, reservation and payout row in the product's database.
