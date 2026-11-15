@@ -37,7 +37,8 @@ const windowHeight = () => {
 };
 const numbers = (list) => (list.length ? list.map((c) => c.n).join(" ") : "none");
 const clip = (s, n) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-const ROW = { reported: 178, hunting: 58, unreadable: 58 };
+// Fixed row heights (the list is windowed by hand): padding 18 + head 18 + replay 16 + rule 57 + three lists 51 + notes 16 + gaps 24 + border 2.
+const ROW = { reported: 203, hunting: 62, unreadable: 62 };
 
 function legend(t, keys) {
   return h_flex()
@@ -229,6 +230,7 @@ export default class Hunts extends View {
     const text = numbers(list);
     return h_flex()
       .id(`line-${label}-${list[0]?.n ?? 0}`)
+      .h(17)
       .gap(6)
       .items_center()
       .tooltip(list.length ? `${hint}\n${list.map((c) => `${c.n}. ${c.method} ${c.path} → ${c.status}`).join("\n")}` : hint)
@@ -239,6 +241,8 @@ export default class Hunts extends View {
   card(t, h, selected) {
     const box = v_flex()
       .id(`hunt-${h.id}`)
+      .h(ROW[h.state])
+      .overflow_hidden()
       .p(9)
       .gap(4)
       .rounded(7)
@@ -252,6 +256,7 @@ export default class Hunts extends View {
         cx.notify();
       });
     const head = h_flex()
+      .h(18)
       .gap(6)
       .items_center()
       .child(div().flex_1().min_w(0).truncate().text_size(11.5).font_medium().text_color(t.foreground).child(`Hunt ${h.short}`))
@@ -260,14 +265,15 @@ export default class Hunts extends View {
       return box.child(head).child(div().text_size(11.5).text_color(t.working).child(h.state === "hunting" ? "Hunting… no report filed yet" : "Its report cannot be read"));
     return box
       .child(head)
-      .child(div().text_size(11).text_color(h.reproduced ? t.done : t.blocked).child(h.reproduced ? "Replayed the logged error: same failure" : "Could not replay the logged error"))
-      .child(div().id(`rule-${h.id}`).h(46).overflow_hidden().text_size(11.5).text_color(t.foreground).tooltip(h.rule || "The report has no rule").child(clip(h.rule || "The report has no rule", 150)))
+      .child(div().h(16).truncate().text_size(11).text_color(h.reproduced ? t.done : t.blocked).child(h.reproduced ? "Replayed the logged error: same failure" : "Could not replay the logged error"))
+      .child(div().id(`rule-${h.id}`).h(57).overflow_hidden().text_size(11.5).text_color(t.foreground).tooltip(h.rule || "The report has no rule").child(clip(h.rule || "The report has no rule", 125)))
       .child(this.line(t, t.blocked, "Fails", h.fails, "Requests that hit the same failure, by request number"))
       .child(this.line(t, t.done, "Still works", h.works, "Neighbours that work: they mark the edge"))
       .child(this.line(t, t.dim, "Neither", h.neither, "Requests the hunter made and listed in neither: look-ups, sign-ins, refusals the product intends"))
       .child(
         div()
           .id(`notes-${h.id}`)
+          .h(16)
           .truncate()
           .text_size(10.5)
           .text_color(h.dropped.length ? t.blocked : t.dim)
