@@ -92,6 +92,20 @@ export function contains(screen, quote) {
   const q = fold(quote);
   return q.length > 0 && fold(screen).includes(q);
 }
+/**
+ * Is this the judge's quote from the reply? Either the quote is in the reply as it stands, or the judge joined
+ * several exact pieces with an ellipsis ("first part … second part"), as happens when one Expect line holds two
+ * facts. Then every piece must be in the reply, in that order. A piece that is not in the reply is still refused.
+ */
+export function quoted(reply, quote) {
+  if (contains(reply, quote)) return true;
+  const pieces = String(quote).split(/…|\.{3,}/).map(fold).filter(Boolean);
+  if (pieces.length < 2) return false;
+  const text = fold(reply);
+  let from = 0;
+  for (const piece of pieces) { const at = text.indexOf(piece, from); if (at < 0) return false; from = at + piece.length; }
+  return true;
+}
 
 /** Find the expectations file for a role: agents/<slug>/expectations.md, then agents/<slug>/expectations.md. */
 export function locate(project, role) {

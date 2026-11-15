@@ -11,13 +11,14 @@
 //   See / Absent: exact text the runner checks itself.
 // The agent under test is Pi in print mode on a small model, with no tools: it sees only its Job,
 // its glossary and its memories, never the expectations. A second model judges Expect and Never
-// and must quote the reply; a quote that is not in the reply is refused.
+// and must quote the reply; a quote that is not in the reply is refused (a quote made of exact pieces
+// joined with an ellipsis is accepted when every piece is in the reply, in order).
 // Exit code: 0 all passed, 1 a check failed, 2 the run itself broke (no model, bad file).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import { parse, job, contains, steps, judged, observed } from './lab-expectations.mjs';
+import { parse, job, contains, quoted, steps, judged, observed } from './lab-expectations.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => { const i = args.indexOf(`--${name}`); if (i < 0) return fallback; const v = args[i + 1]; args.splice(i, 2); return v; };
@@ -100,8 +101,8 @@ async function judge(question, reply, lines) {
       const out = lines.map((l, i) => {
         const r = v.find(x => Number(x.n) === i + 1);
         if (!r) throw Error(`no verdict for line ${i + 1}`);
-        const happened = !!r.met, quoted = contains(reply, r.quote || '');
-        if (happened && !quoted) throw Error(`quote not in the reply: "${r.quote}"`);
+        const happened = !!r.met;
+        if (happened && !quoted(reply, r.quote || '')) throw Error(`quote not in the reply: "${r.quote}"`);
         return { kind: l.kind, text: l.text, ok: l.kind === 'expect' ? happened : !happened, quote: happened ? r.quote : '' };
       });
       return out;

@@ -39,3 +39,4 @@
 # The wake-up that runs an agent when its files are touched
 /extensions/wake-up/ @johnlindquist
 /test/wake-up.test.ts @johnlindquist
+/test/agent-checks.test.ts @johnlindquist
