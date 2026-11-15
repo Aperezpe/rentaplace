@@ -39,6 +39,10 @@ try {
   const a = await post('Price for Lakeside A-Frame', 'How much would Lakeside A-Frame be from 2026-11-16 to 2026-11-19 for 2 guests?');
   sort(); const r1 = draft(); const da = rows('drafts.jsonl').find((r) => r.id === a);
   check('1 stay written in full → one draft with the looked-up total, waiting for a person', r1.drafted.length === 1 && da && da.lookup === 'ok' && da.draft.includes(TOTAL) && amounts(da.draft).every((x) => da.facts.join(' ').includes(x.replace(/[.,]$/, ''))), { total: TOTAL, stay: da?.stay, owner: da?.owner, status: da?.status, amountsInDraft: da ? amounts(da.draft) : null });
+  // 1b. Who signs: the sorter may say a price question is Pricing's; the draft is still written and signed by Booking,
+  // and the row says who to ask when it is wrong. The two agree because the row carries both, on purpose.
+  const tagA = readTags().find((r) => r.ticketId === a);
+  check('1b the draft row says Booking wrote it, and names the tagged owner as who to ask if it is wrong', da && da.writtenBy === 'booking' && da.askIfWrong === tagA?.owner, { taggedOwner: tagA?.owner, writtenBy: da?.writtenBy, askIfWrong: da?.askIfWrong, signedAs: da?.draft.trim().split('\n').slice(-2).join(' / ') });
   // 2. The same ticket again: the sorter and the drafter run again, and the ticket's tag line is seen again → still one draft.
   sort(); const r2 = draft();
   fs.appendFileSync(tags, JSON.stringify({ ...JSON.parse(fs.readFileSync(tags, 'utf8').split('\n')[0]), at: 'again' }) + '\n');
