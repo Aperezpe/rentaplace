@@ -113,14 +113,15 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
       return { checks: list, cleared: list.filter(c => c.passed === c.of).length, passed: list.reduce((a, c) => a + c.passed, 0), cost: j.cost };
     };
     const sealed = async glossary => { const j = checks(glossary, ['--cases', path.join(sealedDir, `${name}.md`), '--sealed'], path.join(sealedDir, 'results', `${run}-sealed-detail.json`)); return { of: j.cases, failed: j.failed, cost: j.cost }; };
-    // Every title and question of the sealed cases: none may ever appear in what the Trainer is sent.
-    const sealedMarks = fs.readFileSync(path.join(sealedDir, `${name}.md`), 'utf8').split('\n').map(l => (l.match(/^##\s+(.+)$/) || l.match(/^Do[^:]*:\s*(.+)$/) || [])[1]).filter(Boolean);
+    // Every question, Expect and Never line of the sealed cases: none may ever appear in what the Trainer is sent.
+    // (Titles are left out: a title can be a sentence of the public glossary, which the Trainer does see.)
+    const sealedMarks = fs.readFileSync(path.join(sealedDir, `${name}.md`), 'utf8').split('\n').map(l => (l.match(/^(?:Do|Expect|Never)[^:]*:\s*(.+)$/) || [])[1]).filter(Boolean);
     const SYSTEM = `You are the Trainer. You improve one file, the glossary of a domain agent, so the agent answers correctly. You can only propose: reply with the whole new glossary in one fenced code block and nothing else is used. Keep every term. Define what words mean; do not paste questions or expected answers into it. Keep it as short as it can be while every practice check passes. You get ${rounds} rounds at most.`;
     const propose = ({ glossary, checks: cs, round }) => new Promise((resolve, reject) => {
       const prompt = `Round ${round} of ${rounds}.\n\nThe agent's job:\n${read('agent.md')}\n\nIts memories (you cannot change these):\n${read('memories.md')}\n\nThe practice checks (you may study them):\n${read('expectations.md')}\n\nHow the current glossary scored on the practice checks, runs passed of runs made:\n${cs.map(c => `- ${c.title}: ${c.passed} of ${c.of}`).join('\n')}\n\nThe current glossary:\n\`\`\`\n${glossary}\`\`\`\n\nReply with the whole improved glossary in one fenced code block.`;
       fs.writeFileSync(path.join(out, `prompt-${round}.txt`), `${SYSTEM}\n\n${prompt}`);
       const leaked = sealedMarks.filter(m => `${SYSTEM}\n${prompt}`.includes(m));
-      if (leaked.length) return reject(Error('a sealed case reached the Trainer\'s prompt; stopping'));
+      if (leaked.length) return reject(Error('a line of a sealed case is in the Trainer\'s prompt; stopping'));
       const child = spawn(process.env.PI_BIN || 'pi', ['-p', '--mode', 'json', '--no-session', '-ne', '-ns', '-np', '-nc', '--no-mcp', '--no-tools', '--thinking', 'off', '--model', MODEL, '--system-prompt', SYSTEM, prompt], { cwd: os.tmpdir(), env: { ...process.env, PI_SKIP_VERSION_CHECK: '1' }, stdio: ['ignore', 'pipe', 'pipe'] });
       let o = ''; child.stdout.on('data', d => o += d); child.on('error', reject);
       child.on('close', () => { let reply = '', cost = 0, used = ''; for (const line of o.split('\n')) { let e; try { e = JSON.parse(line); } catch { continue; } if (e.type === 'message_end' && e.message?.role === 'assistant') { reply = (e.message.content || []).filter(c => c.type === 'text').map(c => c.text).join(''); cost += e.message.usage?.cost?.total || 0; used = `${e.message.provider}/${e.message.model}`; } }
