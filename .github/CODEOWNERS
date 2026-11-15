@@ -34,3 +34,6 @@
 /bin/agent-checks.mjs @johnlindquist
 /bin/lab-expectations.mjs @johnlindquist
 /.github/workflows/agent-checks.yml @johnlindquist
+# The wake-up that runs an agent when its files are touched
+/extensions/wake-up/ @johnlindquist
+/test/wake-up.test.ts @johnlindquist

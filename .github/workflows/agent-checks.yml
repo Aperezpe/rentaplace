@@ -25,6 +25,13 @@ jobs:
       JUDGE_MODEL: anthropic/claude-sonnet-4-5
       PI_SKIP_VERSION_CHECK: '1'
     steps:
+      - name: Check for a model key
+        # No key, no verdict: fail here with the reason rather than pass without asking a model.
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::no model key: set the ANTHROPIC_API_KEY secret (gh secret set ANTHROPIC_API_KEY -R $GITHUB_REPOSITORY)"
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
