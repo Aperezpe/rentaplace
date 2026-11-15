@@ -10,6 +10,8 @@ import { requireUser } from '../auth.ts';
 import type { Account } from '../types.ts';
 /** How long a hold keeps its nights and its price. */
 export const HOLD_HOURS=24;
+/** How many holds one guest can have active at once. A getaway is one stay; three lets a guest keep a short list while deciding. Released, expired and reserved holds do not count. */
+export const MAX_ACTIVE_HOLDS=3;
 /** A hold as its guest reads it. Expiry is decided here from the clock passed in, never from a background job. */
 function view(row:any,clock:string) {
   return {...row,quote:JSON.parse(row.quote),status:row.status==='active' && row.expires_at<=clock?'expired':row.status};
@@ -18,7 +20,11 @@ function view(row:any,clock:string) {
 export function expireHolds(db: DatabaseSync,clock=now()): number {
   return Number(db.prepare("UPDATE holds SET status='expired' WHERE status='active' AND expires_at<=?").run(clock).changes);
 }
-/** Place a 24-hour hold on a stay for the signed-in guest: it keeps the nights and the price quoted now. No money moves. */
+/** A guest's holds that still keep nights at this clock. Released, expired and reserved holds are not counted. */
+export function activeHoldCount(db: DatabaseSync,guestId: string,clock=now()): number {
+  return Number((db.prepare("SELECT COUNT(*) n FROM holds WHERE guest_id=? AND status='active' AND expires_at>?").get(guestId,clock) as any).n);
+}
+/** Place a 24-hour hold on a stay for the signed-in guest: it keeps the nights and the price quoted now. No money moves. At most MAX_ACTIVE_HOLDS active per guest. */
 export function placeHold(db: DatabaseSync,input: any,account: Account | undefined,clock=now()) {
   const user=requireUser(account,'guest');
   const slug=textInput(input.slug,'Home',180),from=textInput(input.from,'Check-in',10),to=textInput(input.to,'Check-out',10);
@@ -39,6 +45,7 @@ export function placeHold(db: DatabaseSync,input: any,account: Account | undefin
     expireHolds(db,clock);
     if(home.status!=='active')throw new AppError(409,'HOME_NOT_OPEN','This home is not taking new stays.');
     if(db.prepare('SELECT id FROM holds WHERE guest_id=? AND listing_id=? AND from_date=? AND to_date=?').get(user.id,home.id,from,to))throw new AppError(409,'HOLD_EXISTS','You have already held this stay once. A stay can be held one time.');
+    if(activeHoldCount(db,user.id,clock)>=MAX_ACTIVE_HOLDS)throw new AppError(409,'HOLD_LIMIT',`You can hold up to ${MAX_ACTIVE_HOLDS} stays at a time. Reserve or release one, or wait for one to run out, before holding another.`);
     assertAvailable(db,home.id,from,to,{clock});
     const q=priceStay(home,from,to,guests),id=randomUUID(),reference=`HOLD-${id.slice(0,8).toUpperCase()}`;
     const expires=new Date(Date.parse(clock)+HOLD_HOURS*3600000).toISOString();

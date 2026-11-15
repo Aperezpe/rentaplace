@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createBooking, quote } from '../src/domain/bookings.ts';
-import { placeHold, readHold, guestHolds, releaseHold, expireHolds, HOLD_HOURS } from '../src/domain/holds.ts';
+import { placeHold, readHold, guestHolds, releaseHold, expireHolds, activeHoldCount, HOLD_HOURS, MAX_ACTIVE_HOLDS } from '../src/domain/holds.ts';
 import { blockDates, listingCalendar } from '../src/domain/calendar.ts';
 import { search, parseSearch } from '../src/domain/search.ts';
 import { createApp } from '../src/server.ts';
@@ -91,6 +91,37 @@ test('search and the calendar show held nights as taken while the hold is active
  assert.equal(listingCalendar(db,home,'2026-11',false,T24).days.find(d=>d.date==='2026-11-11')?.status,'available');
  assert.ok(search(db,q,T24).items.some(h=>h.slug===stay.slug));db.close();
 });
+// The cap: a guest has at most MAX_ACTIVE_HOLDS active holds at once. Each stay below is a different week of the same home.
+const week=(n:number)=>({slug:stay.slug,from:`2026-12-${String(1+7*n).padStart(2,'0')}`,to:`2026-12-${String(3+7*n).padStart(2,'0')}`,guests:2});
+const fill=(db:any,who=guest,clock=T0)=>Array.from({length:MAX_ACTIVE_HOLDS},(_,n)=>placeHold(db,week(n),who,clock).hold);
+test('active holds per guest are capped: the next one is refused by name and nothing is saved',()=>{
+ const {db}=fixture();assert.equal(MAX_ACTIVE_HOLDS,3);fill(db);
+ assert.throws(()=>placeHold(db,week(3),guest,T0),{status:409,code:'HOLD_LIMIT',message:'You can hold up to 3 stays at a time. Reserve or release one, or wait for one to run out, before holding another.'});
+ assert.throws(()=>placeHold(db,{...week(3),slug:'courtyard-loft'},guest,T0),{code:'HOLD_LIMIT'},'another home counts against the same cap');
+ assert.equal(count(db,'holds'),MAX_ACTIVE_HOLDS);
+ assert.ok(quote(db,stay.slug,week(3).from,week(3).to,2,otherGuest,T0),'the refused nights stay free for everyone');
+ assert.equal(placeHold(db,week(3),otherGuest,T0).hold.status,'active','the cap is per guest: another guest is not affected');db.close();
+});
+test('released, expired and reserved holds do not count against the cap',()=>{
+ const {db}=fixture();const [first,second]=fill(db);
+ releaseHold(db,first.id,guest,T0);assert.equal(placeHold(db,week(3),guest,T0).hold.status,'active','a released hold makes room');
+ assert.throws(()=>placeHold(db,week(4),guest,T0),{code:'HOLD_LIMIT'});
+ createBooking(db,{...input,from:second.from_date,to:second.to_date},guest,T0);assert.equal(readHold(db,second.id,guest,T0).status,'converted');
+ assert.equal(placeHold(db,week(4),guest,T0).hold.status,'active','a hold that became a reservation makes room');
+ assert.throws(()=>placeHold(db,{...week(0),slug:'courtyard-loft'},guest,T0),{code:'HOLD_LIMIT'});
+ assert.throws(()=>placeHold(db,{...week(0),slug:'courtyard-loft'},guest,JUST_BEFORE),{code:'HOLD_LIMIT'},'still full one second before the 24 hours are up');
+ assert.equal(activeHoldCount(db,guest.id,JUST_BEFORE),MAX_ACTIVE_HOLDS);assert.equal(activeHoldCount(db,guest.id,T24),0,'the count reads the clock itself: nothing was tidied in between');
+ for(let n=0;n<MAX_ACTIVE_HOLDS;n++)assert.equal(placeHold(db,{...week(n),slug:'fern-cottage'},guest,T24).hold.status,'active','holds that ran out make room, by the clock passed in, with nothing run in between');
+ assert.throws(()=>placeHold(db,{...week(3),slug:'fern-cottage'},guest,T24),{code:'HOLD_LIMIT'});db.close();
+});
+test('at the cap, a repeated request key still returns its own hold, and a stay already held still says so',()=>{
+ const {db}=fixture();const first=placeHold(db,{...week(0),requestKey:'cap-1'},guest,T0).hold;placeHold(db,week(1),guest,T0);placeHold(db,week(2),guest,T0);
+ const again=placeHold(db,{...week(0),requestKey:'cap-1'},guest,T0);assert.equal(again.replayed,true);assert.equal(again.hold.id,first.id);
+ assert.throws(()=>placeHold(db,week(1),guest,T0),{code:'HOLD_EXISTS'});
+ assert.throws(()=>placeHold(db,{...week(3),requestKey:'cap-2'},guest,T0),{code:'HOLD_LIMIT'});
+ assert.throws(()=>placeHold(db,{...week(3),requestKey:'cap-2'},guest,T0),{code:'HOLD_LIMIT'},'a refused request saved no key: the retry is refused the same way');
+ assert.equal(count(db,'holds'),MAX_ACTIVE_HOLDS);db.close();
+});
 // End to end through the HTTP API on a running copy, with a control: without the hold the same nights are bookable.
 test('HTTP: a signed-in guest holds a stay, another guest cannot reserve it, and without the hold the same nights are bookable',async()=>{
  const run=async(withHold:boolean)=>{
@@ -120,4 +151,21 @@ test('HTTP: a signed-in guest holds a stay, another guest cannot reserve it, and
   } finally {await new Promise(r=>server.close(r));db.close();}
  };
  await run(false);await run(true);
+});
+// The cap end to end through the HTTP API, with a control: with the cap line removed from placeHold the fourth hold is placed (201) and this test fails.
+test('HTTP: a fourth active hold is refused with 409 HOLD_LIMIT and a plain message, and releasing one makes room',async()=>{
+ const {db}=fixture();const {server}=createApp(db);await new Promise<void>(r=>server.listen(0,'127.0.0.1',r));
+ const base=`http://127.0.0.1:${(server.address() as any).port}`;
+ const call=async(who:string,method:string,path:string,body?:unknown)=>{const res=await fetch(base+path,{method,headers:{Cookie:`rap_session=${makeSession(who)}`,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});return {status:res.status,data:await res.json() as any};};
+ try {
+  const placed=[];for(let n=0;n<MAX_ACTIVE_HOLDS;n++){const res=await call(guest.id,'POST','/api/holds',week(n));assert.equal(res.status,201);placed.push(res.data.hold);}
+  const fourth=await call(guest.id,'POST','/api/holds',week(3));
+  assert.equal(fourth.status,409);assert.equal(fourth.data.error.code,'HOLD_LIMIT');assert.equal(fourth.data.error.message,'You can hold up to 3 stays at a time. Reserve or release one, or wait for one to run out, before holding another.');assert.ok(!('hold' in fourth.data));
+  assert.equal(count(db,'holds'),MAX_ACTIVE_HOLDS);assert.equal((await call(guest.id,'GET','/api/holds')).data.items.filter((h:any)=>h.status==='active').length,MAX_ACTIVE_HOLDS);
+  assert.equal((await call(otherGuest.id,'GET',`/api/quote?slug=${stay.slug}&from=${week(3).from}&to=${week(3).to}&guests=2`)).status,200,'the refused nights were not taken');
+  assert.equal((await call(otherGuest.id,'POST','/api/holds',{...week(3),slug:'courtyard-loft'})).status,201,'another guest is not capped by this one');
+  assert.equal((await call(guest.id,'POST',`/api/holds/${placed[0].id}/release`)).data.hold.status,'released');
+  const after=await call(guest.id,'POST','/api/holds',week(3));assert.equal(after.status,201);assert.equal(after.data.hold.status,'active');
+  for(const table of ['bookings','payouts','email_outbox'])assert.equal(count(db,table),0,`${table} stays empty`);
+ } finally {await new Promise(r=>server.close(r));db.close();}
 });

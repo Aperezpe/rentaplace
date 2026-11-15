@@ -35,7 +35,7 @@ One meaning per word. People and agents use these words the same way in prompts,
   - **Cancelled**: the guest withdrew. The dates are free and the refund follows the cancellation policy.
   - **Completed**: the stay has happened.
 - **Reservation conflict**: two claims on the same night of the same listing. Pending, confirmed and completed reservations hold their nights; declined and cancelled ones do not.
-- **Hold**: a signed-in guest's 24-hour claim on a stay, placed before reserving. It keeps the nights and locks the price quoted when it was placed. No money moves. One per guest and stay. It ends when the guest reserves the stay (at the held price), releases it, or 24 hours pass. Table and code say `hold`.
+- **Hold**: a signed-in guest's 24-hour claim on a stay, placed before reserving. It keeps the nights and locks the price quoted when it was placed. No money moves. One per guest and stay, and at most three active per guest at a time. It ends when the guest reserves the stay (at the held price), releases it, or 24 hours pass. Table and code say `hold`.
 - **Active hold**: a hold that has not been released, turned into a reservation, or run out.
 - **Block**: dates a host closes on their own calendar, with a note such as "Personal use". A block cannot cover a night that a reservation or an active hold keeps.
 - **Available**: a night with no block, no reservation holding it and no active hold on it.
