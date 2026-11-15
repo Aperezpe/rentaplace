@@ -1,0 +1,1 @@
+{ "place": "right", "size": 304, "title": "Hunts", "focusable": true, "overlay": { "kind": "window", "key": "hunts", "keep": true, "width": 360, "height": 560 } }
