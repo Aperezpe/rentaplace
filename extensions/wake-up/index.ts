@@ -7,14 +7,14 @@
 //   .pi/settings.json  {"extensions": ["../extensions/wake-up"]}   every run in this project
 //
 // The domain agent is Pi in print mode on a small model with no tools: it sees its job,
-// glossary and memories, what the main agent was asked, and the file. WAKE_MODEL changes the model.
+// glossary and memories and what the main agent was asked and is doing, never the code. WAKE_MODEL changes the model.
 import { spawn } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { type Agent, type Touch, Once, loadAgents, mainContext, note, owners, systemPrompt, touched, wakePrompt, warningFrom } from './core.ts';
 
-const MODEL = process.env.WAKE_MODEL || 'anthropic/claude-haiku-4-5';
+const MODEL = process.env.WAKE_MODEL || 'anthropic/claude-haiku-5-5';
 const PI = process.env.PI_BIN || 'pi';
 
 type Reply = { text: string; model: string; cost: number };
@@ -56,10 +56,9 @@ export default function wakeUp(pi: any) {
 
   async function wake(agent: Agent, touch: Touch, path: string, ctx: any): Promise<string> {
     const started = Date.now();
-    const file = existsSync(join(root, path)) ? readFileSync(join(root, path), 'utf8') : '';
     const main = mainContext(ctx.sessionManager.getBranch());
     try {
-      const reply = await ask(systemPrompt(agent), wakePrompt(touch, path, main, file), ctx.signal);
+      const reply = await ask(systemPrompt(agent), wakePrompt(touch, path, main), ctx.signal);
       const warning = warningFrom(reply.text);
       record({ agent: agent.name, path, tool: touch.tool, model: reply.model, cost: reply.cost, ms: Date.now() - started, request: main.request, warning });
       if (!warning) return '';

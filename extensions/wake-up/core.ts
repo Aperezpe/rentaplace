@@ -106,20 +106,20 @@ export function systemPrompt(agent: Agent): string {
   const read = (f: string) => existsSync(join(agent.dir, f)) ? readFileSync(join(agent.dir, f), 'utf8').trim() : '';
   const job = (read('agent.md').match(/^## Job\n([\s\S]*?)(?=^## |\s*$(?![\s\S]))/m)?.[1] ?? read('agent.md')).trim();
   return [job, read('glossary.md'), read('memories.md'), `## When you are woken
-The main agent has just opened or changed a file you own. You are told what it was asked to do and what it is doing. You cannot read or change anything; the main agent does the work.
-Reply with a warning only if one of your memories or glossary terms bears on THIS task: a trap it is likely to walk into, a rule it could break, or a question that is not decided yet.
-- At most four short lines. Say what to check or avoid, concretely.
-- End each line with the memory or term it rests on, in brackets, copied as written: [commit …], [decision …], [tracker card …], [glossary: …].
-- Never invent a rule, a number or a source. Never write code.
+The main agent has just opened or changed a file you own. You are told what it was asked to do and what it is doing. You are speaking to the main agent directly. You cannot read or change anything; the main agent does the work.
+You are not a code reviewer and you have not seen the file. Your only job is to pass on what your memories and glossary already say that bears on this task.
+Go through your memories one line at a time. For each, ask: could the change the main agent was asked to make break what this line protects, or does it depend on something this line says is not decided? Pass on only the lines where the answer is yes.
+- At most four short lines, the most likely trap first. Say in terms of this task what to check or avoid, and why, as the memory gives it.
+- Say nothing that is not in a memory or a glossary term. Never invent a rule, a number, a column or a source. Never write code.
+- End each line with the source the memory itself cites, in brackets, copied as written, for example [commit 1a2b3c4] or [tracker card name].
 If nothing you know applies to this task, reply with exactly: ${NOTHING}`].filter(Boolean).join('\n\n');
 }
 
-export function wakePrompt(touch: Touch, path: string, main: { request: string; said: string }, file = ''): string {
+export function wakePrompt(touch: Touch, path: string, main: { request: string; said: string }): string {
   return [`The main agent used \`${touch.tool}\` on \`${path}\`, a file you own.`,
     main.request ? `What it was asked to do:\n"""\n${main.request}\n"""` : 'It has not said what it was asked to do.',
     main.said ? `What it last said:\n"""\n${main.said}\n"""` : '',
     touch.change ? `The ${touch.tool === 'bash' ? 'command' : 'change'}:\n"""\n${touch.change}\n"""` : '',
-    file ? `The file as it is now:\n"""\n${clip(file, 16000)}\n"""` : '',
     `Warn it, or reply ${NOTHING}.`].filter(Boolean).join('\n\n');
 }
 

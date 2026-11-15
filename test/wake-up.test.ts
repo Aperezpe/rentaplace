@@ -79,8 +79,8 @@ test('the agent is given its job, glossary and memories, never its expectations,
   assert.match(system, /You are read-only\./); assert.match(system, /locks the price/); assert.match(system, /commit abc/);
   assert.doesNotMatch(system, /SECRET|not part of the job/);
   assert.match(system, new RegExp(`reply with exactly: ${NOTHING}`));
-  const prompt = wakePrompt({ tool: 'edit', paths: ['src/b.ts'], change: '- a\n+ b' }, 'src/b.ts', { request: 'Fix it', said: '' }, 'export const x=1');
-  assert.match(prompt, /used `edit` on `src\/b\.ts`/); assert.match(prompt, /Fix it/); assert.match(prompt, /\+ b/); assert.match(prompt, /export const x=1/);
+  const prompt = wakePrompt({ tool: 'edit', paths: ['src/b.ts'], change: '- a\n+ b' }, 'src/b.ts', { request: 'Fix it', said: '' });
+  assert.match(prompt, /used `edit` on `src\/b\.ts`/); assert.match(prompt, /Fix it/); assert.match(prompt, /\+ b/);
   assert.equal(warningFrom('NOTHING'), null); assert.equal(warningFrom(' nothing.\n'), null); assert.equal(warningFrom(''), null);
   assert.equal(warningFrom('Check replays first. [commit abc]'), 'Check replays first. [commit abc]');
   assert.match(note('booking', 'src/b.ts', 'Check replays.'), /\[Booking domain agent, woken because you touched src\/b\.ts\. It is read-only; you decide and you write\.\]\nCheck replays\./);
