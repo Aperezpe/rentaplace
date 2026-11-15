@@ -35,8 +35,11 @@ export function agentsFor(files, root) {
   }
   return out;
 }
-/** Run the checks for every agent that owns a changed file. `run(args)` starts the checks runner and returns its exit code. */
-export function onChange({ files, root, sealedDir = undefined, repeat = 2, run, log = console.log }) {
+/**
+ * Run the checks for every agent that owns a changed file. `run(args)` starts the checks runner and returns its exit code.
+ * @param {{ files: string[], root: string, sealedDir?: string, repeat?: number, run: (args: string[]) => number, log?: (line: string) => void }} o
+ */
+export function onChange({ files, root, sealedDir, repeat = 2, run, log = console.log }) {
   const owners = agentsFor(files, root), names = Object.keys(owners), runs = [];
   if (!names.length) { log(`checks-on-change: ${files.length} file(s) changed, none belongs to an agent. Nothing to run.`); return { ran: false, ok: true, runs }; }
   for (const name of names) {
