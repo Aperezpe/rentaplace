@@ -4,7 +4,6 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { test } from 'node:test';
-// @ts-expect-error plain .mjs
 import { check, profile, sealedOff } from '../bin/sealed-off.mjs';
 
 const mac = process.platform === 'darwin';
