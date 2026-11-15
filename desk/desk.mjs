@@ -75,7 +75,7 @@ export const askPlain = (system, message, model = DESK_MODEL) => runPi({ system,
  * Returns the reply, the confirmation (built here from what the product saved, never from the model's words),
  * and whether something was left for a person (appended to `list`, one line each).
  */
-export async function askDesk({ message, cookie = '', guest = null, site, list, model = DESK_MODEL, broken = '' }) {
+export async function askDesk({ message, cookie = '', guest = null, site, list, model = DESK_MODEL, broken = process.env.DESK_BROKEN || '' }) {
   const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'desk-')), 'tools.jsonl');
   const who = guest ? `The visitor is signed in as the guest ${guest.name}.` : 'The visitor is not signed in. A hold needs a guest sign-in; you can still quote.';
   const r = await runPi({ system: `${deskKnowledge()}\n\n${who}`, message: String(message).slice(0, 4000), model, tools: true, env: { DESK_SITE: site, DESK_COOKIE: cookie, DESK_GUEST: guest?.id || '', DESK_LOG: log, DESK_BROKEN: broken } });
