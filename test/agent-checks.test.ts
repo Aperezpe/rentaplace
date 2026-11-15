@@ -12,6 +12,12 @@ test('a quote made of exact pieces joined with an ellipsis is accepted when ever
  assert.equal(contains(reply,stitched),false,'the strict rule refuses it: this was the false failure');
  assert.ok(quoted(reply,stitched));assert.ok(quoted(reply,'the nights are free again... refunded in full'));assert.ok(quoted(reply,'…the host said no'));
 });
+test('pieces of a list quoted on separate lines are accepted when each is in the reply, in order',()=>{
+ const list='A hold keeps two things for the guest (glossary, **Hold**):\n1. **The nights**: while the hold is active, no one else can reserve them.\n2. **The price**: an active hold locks the quoted price.';
+ const picked='A hold keeps two things for the guest (glossary, **Hold**):\n\n1. **The nights**\n\n2. **The price**';
+ assert.equal(contains(list,picked),false);assert.ok(quoted(list,picked));
+ assert.equal(quoted(list,'1. **The nights**\n\n2. **The deposit**'),false);
+});
 test('a piece that is not in the reply, pieces out of order, and an empty quote are still refused',()=>{
  assert.equal(quoted(reply,'the nights are free again … the guest is charged a fee'),false);
  assert.equal(quoted(reply,'The guest is refunded in full … the nights are free again'),false);

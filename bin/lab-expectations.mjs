@@ -94,12 +94,12 @@ export function contains(screen, quote) {
 }
 /**
  * Is this the judge's quote from the reply? Either the quote is in the reply as it stands, or the judge joined
- * several exact pieces with an ellipsis ("first part … second part"), as happens when one Expect line holds two
- * facts. Then every piece must be in the reply, in that order. A piece that is not in the reply is still refused.
+ * several exact pieces with an ellipsis ("first part … second part") or put them on separate lines, as happens
+ * when one Expect line holds two facts. Then every piece must be in the reply, in that order. A piece that is not in the reply is still refused.
  */
 export function quoted(reply, quote) {
   if (contains(reply, quote)) return true;
-  const pieces = String(quote).split(/…|\.{3,}/).map(fold).filter(Boolean);
+  const pieces = String(quote).split(/…|\.{3,}|\n+/).map(fold).filter(Boolean);
   if (pieces.length < 2) return false;
   const text = fold(reply);
   let from = 0;

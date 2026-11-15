@@ -12,7 +12,7 @@
 // The agent under test is Pi in print mode on a small model, with no tools: it sees only its Job,
 // its glossary and its memories, never the expectations. A second model judges Expect and Never
 // and must quote the reply; a quote that is not in the reply is refused (a quote made of exact pieces
-// joined with an ellipsis is accepted when every piece is in the reply, in order).
+// joined with an ellipsis or line breaks is accepted when every piece is in the reply, in order).
 // Exit code: 0 all passed, 1 a check failed, 2 the run itself broke (no model, bad file).
 import fs from 'node:fs';
 import os from 'node:os';
