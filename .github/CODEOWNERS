@@ -25,3 +25,12 @@
 /src/server.ts @johnlindquist
 /src/router.ts @johnlindquist
 /db/ @johnlindquist
+/test/cancellation.test.ts @johnlindquist
+/test/hold-price.test.ts @johnlindquist
+# Domain agents: a change to an agent's job, memories, glossary or scenario checks is reviewed by the people who own that domain
+/agents/booking/ @johnlindquist
+/agents/pricing/ @johnlindquist
+# The check runner and its workflow
+/bin/agent-checks.mjs @johnlindquist
+/bin/lab-expectations.mjs @johnlindquist
+/.github/workflows/agent-checks.yml @johnlindquist
