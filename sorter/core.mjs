@@ -64,11 +64,13 @@ export function addTag(file, row) {
 }
 
 /**
- * One pass over what arrived. `fetchTickets` returns the inbox or throws (support API down); `sort` asks the model.
- * Offline: nothing is tagged and the saved place does not move, so the same arrivals are read again next time.
- * A reply that is not the asked shape: no tag, reported as "unsorted", the place does move (a person sees it in the list).
+ * One pass over what arrived. `fetchTickets` returns the inbox or throws (support API down); `sort` asks the model;
+ * `read` turns what the model returned into { owner, money, unsure?, why?, … } or null.
+ * Offline (the support API or the model cannot be reached): the saved place does not move, so the same arrivals are
+ * read again next time. Tickets tagged before the failure keep their one tag.
+ * An answer that is not the asked shape: no tag, reported as "unsorted", the place does move (a person sees it in the list).
  */
-export async function pass({ offset, bytes, tagsFile, fetchTickets, sort, model, now = () => new Date().toISOString() }) {
+export async function pass({ offset, bytes, tagsFile, fetchTickets, sort, read = parseReply, model, now = () => new Date().toISOString() }) {
   const { ids, next } = readArrivals(offset, bytes);
   const fresh = [...new Set(ids)].filter((id) => !readTags(tagsFile).some((r) => r.ticketId === id));
   const out = { status: 'ok', arrived: ids.length, tagged: [], already: [...new Set(ids)].length - fresh.length, unsorted: [], missing: [], offset };
@@ -79,9 +81,10 @@ export async function pass({ offset, bytes, tagsFile, fetchTickets, sort, model,
     const t = inbox.find((x) => x.id === id);
     if (!t) { out.missing.push(id); continue; }
     let got = null;
-    try { got = parseReply(await sort(t)); } catch (e) { out.unsorted.push({ ticketId: id, why: String(e.message ?? e).slice(0, 200) }); continue; }
+    try { got = read(await sort(t)); } catch (e) { return { ...out, status: 'offline', reason: `the model did not answer for ${id}: ${String(e.message ?? e).slice(0, 200)}` }; }
     if (!got) { out.unsorted.push({ ticketId: id, why: 'the reply was not the asked shape' }); continue; }
-    const row = { ticketId: id, owner: got.owner, money: got.money, ...(got.money ? { waitsFor: 'a person' } : {}), model, at: now() };
+    const { owner, money, unsure, why, ...rest } = got;
+    const row = { ticketId: id, owner, money, ...(unsure ? { unsure: true, why } : {}), ...(money || unsure ? { waitsFor: 'a person' } : {}), ...rest, model, at: now() };
     if (addTag(tagsFile, row)) out.tagged.push(row);
   }
   return { ...out, offset: next };
