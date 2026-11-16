@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 // Repeat the sort on the labelled set and count, so "every time" is said from every run, not from one.
-//   node sorter/trial.mjs <outFolder> [k=5] [model,model…]
+//   node sorter/trial.mjs <outFolder> [k=5] [model,model…] [first|fresh]
 // One ticket per call, as on arrival. Controls: keyword rules (same answer every run), and run 1 read alone.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { TICKETS } from './labelled.mjs';
 import { INSTRUCTION, ticketText, parseReply, keywordSort, grade } from './core.mjs';
 import { write, spent } from '../drafts/writer.mjs';
 
 const out = resolve(process.argv[2]); const k = Number(process.argv[3] || 5);
 const MODELS = (process.argv[4] || 'anthropic/claude-haiku-4-5,anthropic/claude-haiku-5-5').split(',');
+const { TICKETS } = await import(process.argv[5] === 'fresh' ? './labelled-fresh.mjs' : './labelled.mjs');
 mkdirSync(out, { recursive: true });
 const jobs = []; for (const model of MODELS) for (let run = 1; run <= k; run++) for (const t of TICKETS) jobs.push({ model, run, t });
 const rows = []; let next = 0;
