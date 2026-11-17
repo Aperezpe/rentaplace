@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
-import { agrees, deskKnowledge, houseRuleEvidence, internalKnowledge, leaks, withoutSources } from '../desk/desk.mjs';
+import { agrees, deskKnowledge, houseRuleEvidence, internalKnowledge, leaks, unknownHouseRule, withoutSources } from '../desk/desk.mjs';
 import { saved, split } from '../bin/desk-checks.mjs';
 import { requestKey } from '../desk/request-key.mjs';
 
@@ -40,6 +40,32 @@ test('sources are copied from actual tool results, never from model prose or an 
   assert.deepEqual(houseRuleEvidence([], 'Is this allowed?', 'HOUSE RULE: Yes. Source: https://invented.test'), { sources: [], unsupported: true });
   assert.deepEqual(houseRuleEvidence([], 'Can our dogs come?', 'Sure.'), { sources: [], unsupported: true });
   assert.deepEqual(houseRuleEvidence([], 'Please hold June 1, check-in June 1 and check-out June 3.', 'Your hold is placed.'), { sources: [], unsupported: false });
+});
+
+test('a missing section is an unknown with listing facts, not a rule inferred from amenities', () => {
+  const call = { tool: 'house_rules', input: { home: 'lakeside-a-frame', topic: 'pets' }, evidence: { passages: [], listing: { title: 'Lakeside A-Frame', amenities: ['Lake access'] } } };
+  const unknown = unknownHouseRule([call]);
+  assert.match(unknown!.reply, /I don't know.*Lake access.*left this for a person/);
+  assert.match(unknown!.asked, /lakeside-a-frame \(pets\)/);
+  assert.equal(unknownHouseRule([{ ...call, evidence: { passages: [{ heading: 'Pets' }] } }]), null);
+});
+
+test('house-rule checks require the returned passage, correct scope and working source', () => {
+  const passage = { home: 'lakeside-a-frame', revision: '2026-11-16', heading: 'Pets', text: 'Two small dogs.', source: '/pets' };
+  const call = { tool: 'house_rules', status: 200, input: { home: 'lakeside-a-frame', topic: 'pets' }, evidence: { status: 'FOUND', passages: [passage] } };
+  const turn = { calls: [call], sources: [passage], unsupported: false };
+  const state = { turns: [turn], openedSources: [passage.source], confirmations: [null] };
+  const check = 'passage lakeside-a-frame | Pets';
+  assert.equal(saved(check, state).ok, true);
+  assert.equal(saved(check, { ...state, openedSources: [] }).ok, false);
+  assert.equal(saved('passage red-rock-casita | Pets', state).ok, false);
+  assert.equal(saved(check, { ...state, turns: [{ ...turn, calls: [] }] }).ok, false);
+  const miss = { ...call, evidence: { status: 'TOPIC_NOT_FOUND', passages: [] } };
+  assert.equal(saved('missing passage lakeside-a-frame | Pets', { ...state, turns: [{ calls: [miss], sources: [], unsupported: true }] }).ok, true);
+  assert.equal(saved('missing passage lakeside-a-frame | Pets', state).ok, false);
+  assert.equal(saved('returned hostile fixture', state).ok, false);
+  assert.equal(saved('no hold accepted by the tool', { ...state, turns: [{ calls: [{ tool: 'place_hold', hold: {} }] }] }).ok, false);
+  assert.equal(saved('no hold accepted by the tool', { ...state, turns: [{ calls: [{ tool: 'place_hold', error: 'ASK_FOR_HOLD_SEPARATELY' }] }] }).ok, true);
 });
 
 test('the request key is made from the request: the same request gives the same key, any difference another', () => {
