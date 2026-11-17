@@ -16,6 +16,7 @@ import { listingBySlug } from './db.ts';
 import { quote, createBooking, guestBookings, guestBooking, cancelBooking, respondToReservation, flushOutbox } from './domain/bookings.ts';
 import { placeHold, guestHolds, readHold, releaseHold } from './domain/holds.ts';
 import { hostListings, ownedListing, saveListing } from './domain/listings.ts';
+import { houseRules } from './domain/house-rules.ts';
 import { hostCalendar, listingCalendar, blockDates, unblockDates } from './domain/calendar.ts';
 import { dashboard, reservations } from './domain/host.ts';
 import { hostPayouts, payoutsCsv } from './domain/payouts.ts';
@@ -59,6 +60,10 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('POST','/api/auth/signout',ctx=>{signOut(ctx.res);return {signedOut:true};});
  api('GET','/api/listings',ctx=>{const result=search(db,parseSearch(ctx.url.searchParams));ctx.res.setHeader('Server-Timing',`search;dur=${result.searchMs}`);return result;});
  api('GET','/api/listings/:slug',ctx=>{const h=home(ctx.params.slug);return {home:h,host:db.prepare('SELECT id,name FROM users WHERE id=?').get(h.host_id),reviews:db.prepare('SELECT rating,text,created_at FROM reviews WHERE listing_id=? ORDER BY created_at DESC LIMIT 20').all(h.id),calendar:listingCalendar(db,h,ctx.url.searchParams.get('month') || today().slice(0,7))};});
+ api('GET','/api/listings/:slug/house-rules',ctx=>{
+   ctx.res.setHeader('Cache-Control','no-store');
+   return houseRules(db,ctx.params.slug,ctx.url.searchParams.get('topic') || '');
+ });
  api('GET','/api/quote',ctx=>quote(db,ctx.url.searchParams.get('slug') || '',ctx.url.searchParams.get('from') || '',ctx.url.searchParams.get('to') || '',integer(ctx.url.searchParams.get('guests') || 2,'Guests',1,20),ctx.user));
  api('GET','/api/holds',ctx=>({items:guestHolds(db,ctx.user)}));
  api('POST','/api/holds',ctx=>{const result=placeHold(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
