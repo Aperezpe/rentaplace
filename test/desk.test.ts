@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
-import { agrees, deskKnowledge, internalKnowledge, leaks, withoutSources } from '../desk/desk.mjs';
+import { agrees, deskKnowledge, houseRuleEvidence, internalKnowledge, leaks, withoutSources } from '../desk/desk.mjs';
 import { saved, split } from '../bin/desk-checks.mjs';
 import { requestKey } from '../desk/request-key.mjs';
 
@@ -20,7 +20,9 @@ test('the desk knows the Job, the glossary and the customer-facing memories, and
   assert.ok(internal.length >= 5);
   for (const line of internal) assert.equal(desk.includes(line.slice(2, 60)), false, `internal memory reached the desk: ${line.slice(0, 60)}`);
   assert.ok(desk.includes('Placing a hold never asks for a card'));
-  assert.ok(desk.includes('You have exactly two tools'));
+  assert.ok(desk.includes('You have three tools'));
+  assert.ok(desk.includes('`house_rules`'));
+  assert.doesNotMatch(desk, /25 lb|leashed outdoors/);
   assert.deepEqual(leaks(desk), [], 'no commit hash, path, test or function name is in what the desk knows');
 });
 
@@ -28,6 +30,16 @@ test('control: the whole internal Booking does carry those marks, and the leak f
   assert.ok(leaks(internalKnowledge()).length > 5);
   assert.deepEqual(leaks('That changed in commit 374848f, see `createBooking`.').sort(), ['374848f', 'createBooking']);
   assert.deepEqual(leaks('A hold keeps the nights and the price for 24 hours.'), []);
+});
+
+test('sources are copied from actual tool results, never from model prose or an empty lookup', () => {
+  const passage = { home: 'lakeside-a-frame', revision: '2026-11-16', heading: 'Pets', text: 'Two small dogs.', source: '/api/listings/lakeside-a-frame/house-rules?topic=pets' };
+  const lookedUp = { tool: 'house_rules', evidence: { passages: [passage] } };
+  assert.deepEqual(houseRuleEvidence([lookedUp, lookedUp], 'Two dogs?', 'HOUSE RULE: Yes. Source: https://invented.test'), { sources: [passage], unsupported: false });
+  assert.deepEqual(houseRuleEvidence([{ tool: 'house_rules', evidence: { passages: [] } }], 'Two dogs?', 'I do not know.'), { sources: [], unsupported: true });
+  assert.deepEqual(houseRuleEvidence([], 'Is this allowed?', 'HOUSE RULE: Yes. Source: https://invented.test'), { sources: [], unsupported: true });
+  assert.deepEqual(houseRuleEvidence([], 'Can our dogs come?', 'Sure.'), { sources: [], unsupported: true });
+  assert.deepEqual(houseRuleEvidence([], 'Please hold June 1, check-in June 1 and check-out June 3.', 'Your hold is placed.'), { sources: [], unsupported: false });
 });
 
 test('the request key is made from the request: the same request gives the same key, any difference another', () => {

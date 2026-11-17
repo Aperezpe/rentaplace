@@ -85,6 +85,17 @@ function runPi({ system, message, model, env, tools }) {
   });
 }
 
+// This is a missing-evidence signal, not a fact checker. Include house-rule questions as well
+// as explicit rule answers so a turn cannot clear the signal by omitting its answer marker.
+const houseRuleWords = /\b(?:house rules?|pets?|dogs?|cats?|animals?|quiet hours|noise|part(?:y|ies)|events?|smok\w*|vap\w*|parking|park (?:my|a|the|our|two|overnight)|(?:check[ -]?(?:in|out)|arriv\w*|leav\w*) (?:time|hours|early|late|by|after|before|at \d)|(?:what time|how early|how late).{0,70}(?:check[ -]?(?:in|out)|arriv\w*|leav\w*))\b/i;
+export function houseRuleEvidence(calls, message, modelReply) {
+  const evidenceCalls = calls.filter(c => c.tool === 'house_rules');
+  const sources = [...new Map(evidenceCalls.flatMap(c => c.evidence.passages)
+    .map(p => [JSON.stringify(p), p])).values()];
+  const ruleTurn = evidenceCalls.length > 0 || houseRuleWords.test(`${message}\n${modelReply}`) || /^\s*HOUSE RULE:/im.test(modelReply);
+  return { sources, unsupported: ruleTurn && sources.length === 0 };
+}
+
 /** Ask a model with given knowledge and no tools (leak check). */
 export const askPlain = (system, message, model = DESK_MODEL) => runPi({ system, message, model, env: {}, tools: false });
 
@@ -101,9 +112,9 @@ export async function askDesk({ message, cookie = '', guest = null, site, list, 
   fs.rmSync(path.dirname(log), { recursive: true, force: true });
   const held = calls.filter(c => c.tool === 'place_hold' && c.hold).at(-1);
   const m = r.text.match(/^\s*FOR A PERSON:\s*(.+)$/m);
-  const reply = r.text.replace(/^\s*FOR A PERSON:.*$/m, '').trim();
+  const reply = r.text.replace(/^\s*FOR A PERSON:.*$/m, '').replace(/^\s*HOUSE RULE:\s*/im, '').trim();
   let forAPerson = null;
   if (m) { forAPerson = { at: new Date().toISOString(), guest: guest?.id || null, asked: m[1].trim(), message: String(message).slice(0, 500), status: 'waiting for a person' }; if (list) { fs.mkdirSync(path.dirname(list), { recursive: true }); fs.appendFileSync(list, JSON.stringify(forAPerson) + '\n'); } }
   const confirmation = held ? { ...held.hold, sameRequestAsBefore: !!held.replayed } : null;
-  return { reply, confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model };
+  return { reply, confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model, ...houseRuleEvidence(calls, message, r.text) };
 }
