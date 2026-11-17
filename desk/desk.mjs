@@ -1,4 +1,4 @@
-// The front desk: Booking's customer-safe side, answering one visitor message with two powers (desk/tools/desk.ts).
+// The front desk: Booking's customer-safe side, answering one visitor message with three tools (desk/tools/desk.ts).
 // Used by POST /desk in src/server.ts and by the desk checks. Pi in print mode, small model, no other tools, no saved session.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -59,7 +59,7 @@ export function agrees(reply, confirmation) {
 
 function runPi({ system, message, model, env, tools }) {
   return new Promise((resolve, reject) => {
-    const argv = ['-p', '--mode', 'json', '--no-session', '-ne', '-ns', '-np', '-nc', '--no-mcp', ...(tools ? ['-e', path.join(HERE, 'tools', 'desk.ts'), '--tools', 'quote,place_hold'] : ['--no-tools']), '--thinking', 'off', '--model', model, '--system-prompt', system, message];
+    const argv = ['-p', '--mode', 'json', '--no-session', '-ne', '-ns', '-np', '-nc', '--no-mcp', ...(tools ? ['-e', path.join(HERE, 'tools', 'desk.ts'), '--tools', env.DESK_BROKEN === 'norules' ? 'quote,place_hold' : 'quote,place_hold,house_rules'] : ['--no-tools']), '--thinking', 'off', '--model', model, '--system-prompt', system, message];
     const child = spawn(PI, argv, { cwd: os.tmpdir(), env: { ...process.env, PI_SKIP_VERSION_CHECK: '1', ...env }, stdio: ['ignore', 'pipe', 'pipe'] });
     let out = '', err = '';
     child.stdout.on('data', d => out += d); child.stderr.on('data', d => err += d);

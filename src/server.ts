@@ -69,7 +69,7 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('POST','/api/holds',ctx=>{const result=placeHold(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
  api('GET','/api/holds/:id',ctx=>({hold:readHold(db,ctx.params.id,ctx.user)}));
  api('POST','/api/holds/:id/release',ctx=>({hold:releaseHold(db,ctx.params.id,ctx.user)}));
- // The front desk: Booking's customer-safe side with two powers, quote and place a hold (desk/desk.mjs). RAP_DESK=off removes it.
+ // The front desk: Booking's customer-safe side with quote, place_hold and house_rules (desk/desk.mjs). RAP_DESK=off removes it.
  // The guide for visiting agents. RAP_AGENT_GUIDE: off (no guide), info (how to read the site), desk (the same, plus the desk).
  const GUIDE=process.env.RAP_AGENT_GUIDE || 'desk',DESK_ON=process.env.RAP_DESK!=='off';
  if(GUIDE!=='off')router.on('GET','/llms.txt',ctx=>{ctx.res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});ctx.res.end(agentGuide(GUIDE==='desk' && DESK_ON));});
