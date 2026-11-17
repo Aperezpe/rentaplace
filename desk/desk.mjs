@@ -96,6 +96,17 @@ export function houseRuleEvidence(calls, message, modelReply) {
   return { sources, unsupported: ruleTurn && sources.length === 0 };
 }
 
+// The easy-to-verify miss case does not depend on a model formatting a handoff or resisting a guess.
+export function unknownHouseRule(calls) {
+  const misses = calls.filter(c => c.tool === 'house_rules' && !c.evidence.passages.length);
+  if (!misses.length) return null;
+  const replies = misses.map(({ input: { home, topic }, evidence: { listing } }) => {
+    const amenities = listing?.amenities?.slice(0, 12).join(', ');
+    return `I don't know the ${topic} rule for ${listing?.title || home}.${amenities ? ` The listing shows these amenities: ${amenities}. Amenities don't establish this rule.` : ''}`;
+  });
+  return { reply: `${[...new Set(replies)].join(' ')} I've left this for a person to check.`, asked: `Check the unpublished house rule: ${misses.map(c => `${c.input.home} (${c.input.topic})`).join(', ')}.` };
+}
+
 /** Ask a model with given knowledge and no tools (leak check). */
 export const askPlain = (system, message, model = DESK_MODEL) => runPi({ system, message, model, env: {}, tools: false });
 
@@ -107,14 +118,20 @@ export const askPlain = (system, message, model = DESK_MODEL) => runPi({ system,
 export async function askDesk({ message, cookie = '', guest = null, site, list, model = DESK_MODEL, broken = process.env.DESK_BROKEN || '' }) {
   const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'desk-')), 'tools.jsonl');
   const who = guest ? `The visitor is signed in as the guest ${guest.name}.` : 'The visitor is not signed in. A hold needs a guest sign-in; you can still quote.';
-  const r = await runPi({ system: `${deskKnowledge()}\n\n${who}`, message: String(message).slice(0, 4000), model, tools: true, env: { DESK_SITE: site, DESK_COOKIE: cookie, DESK_GUEST: guest?.id || '', DESK_LOG: log, DESK_BROKEN: broken } });
-  const calls = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
-  fs.rmSync(path.dirname(log), { recursive: true, force: true });
+  const knowledge = deskKnowledge().replace('You have three tools.', broken === 'norules' ? 'The house_rules tool is unavailable in this run; only quote and place_hold are available.' : 'You have three tools.');
+  let r, calls;
+  try {
+    r = await runPi({ system: `${knowledge}\n\n${who}`, message: String(message).slice(0, 4000), model, tools: true, env: { DESK_SITE: site, DESK_COOKIE: cookie, DESK_GUEST: guest?.id || '', DESK_LOG: log, DESK_BROKEN: broken } });
+    calls = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
+  } finally { fs.rmSync(path.dirname(log), { recursive: true, force: true }); }
   const held = calls.filter(c => c.tool === 'place_hold' && c.hold).at(-1);
   const m = r.text.match(/^\s*FOR A PERSON:\s*(.+)$/m);
-  const reply = r.text.replace(/^\s*FOR A PERSON:.*$/m, '').replace(/^\s*HOUSE RULE:\s*/im, '').trim();
+  const evidence = houseRuleEvidence(calls, message, r.text);
+  const unknown = broken === 'norules' ? null : unknownHouseRule(calls);
+  const reply = unknown?.reply ?? r.text.replace(/^\s*FOR A PERSON:.*$/gm, '').replace(/^\s*HOUSE RULE:\s*/im, '').trim();
+  const asked = unknown?.asked ?? m?.[1].trim();
   let forAPerson = null;
-  if (m) { forAPerson = { at: new Date().toISOString(), guest: guest?.id || null, asked: m[1].trim(), message: String(message).slice(0, 500), status: 'waiting for a person' }; if (list) { fs.mkdirSync(path.dirname(list), { recursive: true }); fs.appendFileSync(list, JSON.stringify(forAPerson) + '\n'); } }
+  if (asked) { forAPerson = { at: new Date().toISOString(), guest: guest?.id || null, asked, message: String(message).slice(0, 500), status: 'waiting for a person' }; if (list) { fs.mkdirSync(path.dirname(list), { recursive: true }); fs.appendFileSync(list, JSON.stringify(forAPerson) + '\n'); } }
   const confirmation = held ? { ...held.hold, sameRequestAsBefore: !!held.replayed } : null;
-  return { reply, confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model, ...houseRuleEvidence(calls, message, r.text) };
+  return { reply, ...(unknown ? { draftReply: r.text } : {}), confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model, ...evidence };
 }
