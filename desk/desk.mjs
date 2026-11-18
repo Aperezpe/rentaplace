@@ -67,7 +67,7 @@ function runPi({ system, message, model, env, tools }) {
     child.on('error', e => { clearTimeout(timer); reject(e); });
     child.on('close', code => {
       clearTimeout(timer);
-      let text = '', used = '', cost = 0; const toolNames = [];
+      let text = '', used = '', cost = 0; const toolNames = [], usage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
       for (const line of out.split('\n')) {
         let e; try { e = JSON.parse(line); } catch { continue; }
         if (e.type === 'message_end' && e.message?.role === 'assistant') {
@@ -75,12 +75,13 @@ function runPi({ system, message, model, env, tools }) {
           for (const c of e.message.content || []) if (c.type === 'toolCall') toolNames.push(c.name);
           if (t.trim()) text = t;
           used = `${e.message.provider}/${e.message.model}`; cost += e.message.usage?.cost?.total || 0;
+          for (const k of Object.keys(usage)) usage[k] += Number(e.message.usage?.[k]) || 0;
           if (e.message.errorMessage) err += e.message.errorMessage;
         }
       }
       if (!text.trim()) return reject(Error(`${model} gave no reply (exit ${code}): ${err.trim().split('\n').slice(-1)[0] || 'no output'}`));
       if (used !== model) return reject(Error(`asked for ${model}, but ${used} answered`));
-      resolve({ text: text.trim(), cost, toolNames });
+      resolve({ text: text.trim(), cost, toolNames, usage });
     });
   });
 }
@@ -119,8 +120,10 @@ export async function askDesk({ message, cookie = '', guest = null, site, list, 
   const log = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'desk-')), 'tools.jsonl');
   const who = guest ? `The visitor is signed in as the guest ${guest.name}.` : 'The visitor is not signed in. A hold needs a guest sign-in; you can still quote.';
   const knowledge = deskKnowledge().replace('You have three tools.', broken === 'norules' ? 'The house_rules tool is unavailable in this run; only quote and place_hold are available.' : 'You have three tools.');
-  let r, calls;
+  let r, calls; const began = Date.now();
   try {
+    // The stable prefix: tools and knowledge are the same on every visit and come first; the visitor's line and message come last,
+    // so the model host can reuse the part it has already read (the receipt's cachedTokens says whether it did).
     r = await runPi({ system: `${knowledge}\n\n${who}`, message: String(message).slice(0, 4000), model, tools: true, env: { DESK_SITE: site, DESK_COOKIE: cookie, DESK_GUEST: guest?.id || '', DESK_LOG: log, DESK_BROKEN: broken } });
     calls = fs.existsSync(log) ? fs.readFileSync(log, 'utf8').trim().split('\n').filter(Boolean).map(l => JSON.parse(l)) : [];
   } finally { fs.rmSync(path.dirname(log), { recursive: true, force: true }); }
@@ -133,5 +136,5 @@ export async function askDesk({ message, cookie = '', guest = null, site, list, 
   let forAPerson = null;
   if (asked) { forAPerson = { at: new Date().toISOString(), guest: guest?.id || null, asked, message: String(message).slice(0, 500), status: 'waiting for a person' }; if (list) { fs.mkdirSync(path.dirname(list), { recursive: true }); fs.appendFileSync(list, JSON.stringify(forAPerson) + '\n'); } }
   const confirmation = held ? { ...held.hold, sameRequestAsBefore: !!held.replayed } : null;
-  return { reply, ...(unknown ? { draftReply: r.text } : {}), confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, model, ...evidence };
+  return { reply, ...(unknown ? { draftReply: r.text } : {}), confirmation, replyAgrees: agrees(reply, confirmation), forAPerson, calls, cost: r.cost, usage: r.usage, ms: Date.now() - began, model, ...evidence };
 }
