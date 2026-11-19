@@ -15,7 +15,7 @@ import { houseRules } from './domain/house-rules.ts';
 import { requestKey } from '../desk/request-key.mjs';
 
 /** Who is calling, set by the app from the visitor's own sign-in before the SDK sees the request. */
-export type McpVisitor = { user?: Account; visitor: string; askDesk?: (message: string) => Promise<unknown> };
+export type McpVisitor = { user?: Account; visitor: string; askDesk?: (message: string) => Promise<unknown>; /** Which protocol era the caller spoke: modern is 2026-07-28, legacy is a 2025 revision served statelessly by the same SDK. */ era?: 'modern' | 'legacy' };
 /** The door for a typed call: this visitor's rate. A refusal is an AppError with the door's own code. */
 export type McpDeps = { db: DatabaseSync; admitCall: (visit: McpVisitor, tool: string) => void | Promise<void> };
 
@@ -44,10 +44,10 @@ export function buildMcpServer({ db, admitCall }: McpDeps, who: McpVisitor) {
     try {
       if (typed) await admitCall(who, name);
       const result = await run(input);
-      log('mcp.tool', { tool: name, visitor: who.visitor, ok: true });
+      log('mcp.tool', { tool: name, visitor: who.visitor, era: who.era, ok: true });
       return done(result);
     } catch (error) {
-      log('mcp.tool', { tool: name, visitor: who.visitor, ok: false, code: error instanceof AppError ? error.code : 'INTERNAL_ERROR', ...(error instanceof AppError ? {} : { message: error instanceof Error ? error.message : 'Unknown error' }) });
+      log('mcp.tool', { tool: name, visitor: who.visitor, era: who.era, ok: false, code: error instanceof AppError ? error.code : 'INTERNAL_ERROR', ...(error instanceof AppError ? {} : { message: error instanceof Error ? error.message : 'Unknown error' }) });
       return refused(error);
     }
   };
@@ -81,6 +81,6 @@ export function buildMcpServer({ db, admitCall }: McpDeps, who: McpVisitor) {
 
 /** The MCP endpoint as a Node handler. The app sets `req.auth.extra` to the McpVisitor; the SDK passes it through untouched. */
 export function mcpEndpoint(deps: McpDeps) {
-  const handler = createMcpHandler(({ authInfo }) => buildMcpServer(deps, (authInfo?.extra ?? { visitor: 'address:unknown' }) as McpVisitor), { onerror: error => log('mcp.failed', { message: error.message }) });
+  const handler = createMcpHandler(({ authInfo, era }) => buildMcpServer(deps, { ...(authInfo?.extra ?? { visitor: 'address:unknown' }) as McpVisitor, era }), { onerror: error => log('mcp.failed', { message: error.message }) });
   return { node: toNodeHandler(handler, { maxRequestBodySize: 65536 }), close: () => handler.close() };
 }

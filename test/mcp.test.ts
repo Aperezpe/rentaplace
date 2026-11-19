@@ -21,8 +21,9 @@ async function site(env: Record<string, string> = {}) {
   for (const [k, v] of Object.entries(set)) process.env[k] = v;
   const { db } = fixture(); const { server } = createApp(db); await new Promise<void>(r => server.listen(0, '127.0.0.1', r));
   const url = `http://127.0.0.1:${(server.address() as any).port}/mcp`, clients: Client[] = [];
-  const connect = async (headers: Record<string, string> = {}) => {
-    const client = new Client({ name: 'test-visitor', version: '1.0.0' });
+  // Pinned to the 2026-07-28 revision (no fallback), unless a test asks for the 2025 handshake that older clients still open with.
+  const connect = async (headers: Record<string, string> = {}, legacy = false) => {
+    const client = new Client({ name: 'test-visitor', version: '1.0.0' }, legacy ? {} : { versionNegotiation: { mode: { pin: '2026-07-28' } } });
     await client.connect(new StreamableHTTPClientTransport(new URL(url), { requestInit: { headers } }));
     clients.push(client); return client;
   };
@@ -42,6 +43,17 @@ test('MCP: the endpoint lists exactly four tools, none for money, reserving, can
     assert.equal(hint.place_hold?.idempotentHint, true);
     assert.deepEqual((tools[2].inputSchema as any).required, ['slug', 'from', 'to', 'guests'], 'the caller cannot send a request key');
     assert.equal('requestKey' in (tools[2].inputSchema as any).properties, false);
+  } finally { await s.close(); }
+});
+
+test('MCP: the same endpoint serves the 2026-07-28 revision and, statelessly, a client that still opens with the 2025 handshake', async () => {
+  const s = await site();
+  try {
+    const modern = await s.connect(signIn(guest.id)), older = await s.connect(signIn(guest.id), true);
+    assert.deepEqual([modern.getProtocolEra(), modern.getNegotiatedProtocolVersion()], ['modern', '2026-07-28']);
+    assert.deepEqual([older.getProtocolEra(), older.getNegotiatedProtocolVersion()], ['legacy', '2025-11-25']);
+    const a: any = await modern.callTool({ name: 'place_hold', arguments: stay }), b: any = await older.callTool({ name: 'place_hold', arguments: stay });
+    assert.deepEqual([body(b).hold.reference, body(b).sameRequestAsBefore], [body(a).hold.reference, true], 'one hold, whichever revision asked');
   } finally { await s.close(); }
 });
 
