@@ -7,7 +7,7 @@ import path from "node:path";
 import { defineSettings, SettingsError, THINKING } from "../settings.mjs";
 
 const settings = defineSettings("demo-widget", {
-  model: { type: "model", default: "anthropic/claude-haiku-4-5", meaning: "The small model that judges" },
+  model: { type: "model", default: "anthropic/claude-haiku-5-5", meaning: "The small model that judges" },
   thinking: { type: "enum", values: THINKING, default: "off", meaning: "How hard the model thinks" },
   refreshSeconds: { type: "number", min: 30, default: 300, meaning: "Seconds between refreshes" },
   sources: { type: "list", default: ["inbox"], meaning: "What to read" },
@@ -27,7 +27,7 @@ test("order: defaults < user file < project file < environment, and each value s
   assert.equal(p.user, path.join(where.home, ".config", "herdr-demo-widget", "config.json"));
   assert.equal(p.project, path.join(where.project, ".herdr", "demo-widget.json"));
   let s = settings.load(where);
-  assert.deepEqual([s.values.model, s.sources.model, s.problems], ["anthropic/claude-haiku-4-5", "default", []]);
+  assert.deepEqual([s.values.model, s.sources.model, s.problems], ["anthropic/claude-haiku-5-5", "default", []]);
   write(p.user, { model: "a/user", refreshSeconds: 60, thinking: "low" });
   s = settings.load(where);
   assert.deepEqual([s.values.model, s.sources.model, s.values.refreshSeconds, s.sources.sources], ["a/user", "user file", 60, "default"]);
@@ -58,7 +58,7 @@ test("a broken file is a named problem and the defaults are still used", () => {
   write(p.project, "[1]");
   const s = settings.load(where);
   assert.deepEqual(s.problems.map((x) => [x.code, x.file]), [["settings_file_broken", p.user], ["settings_file_broken", p.project]]);
-  assert.equal(s.values.model, "anthropic/claude-haiku-4-5");
+  assert.equal(s.values.model, "anthropic/claude-haiku-5-5");
   assert.throws(() => settings.set("model", "a/b", where), (e) => e instanceof SettingsError && e.code === "settings_file_broken");
   assert.equal(fs.readFileSync(p.user, "utf8"), "{ model: ", "a broken file is never overwritten");
 });

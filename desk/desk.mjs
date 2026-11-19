@@ -5,11 +5,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { SMALL_MODEL } from '../models.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, '..');
 const PI = process.env.PI_BIN || 'pi';
-export const DESK_MODEL = process.env.DESK_MODEL || 'anthropic/claude-haiku-4-5';
+export const DESK_MODEL = process.env.DESK_MODEL || SMALL_MODEL;
 
 const section = (text, title) => (text.match(new RegExp(`^##\\s+${title}\\s*\\n([\\s\\S]*?)(?=^##\\s|(?![\\s\\S]))`, 'm')) || [, ''])[1].trim();
 /** Drop a line's trailing source note "(commit …; file …)" and a glossary line's "(Code: …)" note. Sources are for colleagues. */

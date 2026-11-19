@@ -13,7 +13,7 @@
 // are still used. Writing (`config set`) validates first and throws a SettingsError.
 //
 //   const settings = defineSettings("issues", {
-//     model: { type: "model", default: "anthropic/claude-haiku-4-5", meaning: "The small model that judges" },
+//     model: { type: "model", default: "anthropic/claude-haiku-5-5", meaning: "The small model that judges" },
 //     thinking: { type: "enum", values: THINKING, default: "off", meaning: "How hard the model thinks" },
 //     refreshSeconds: { type: "number", min: 30, default: 300, meaning: "Seconds between refreshes" },
 //   });
@@ -67,7 +67,7 @@ export function problemWith(spec, value) {
     case "string":
       return typeof value === "string" && value !== "" ? null : "must be text";
     case "model":
-      return typeof value === "string" && /^[\w.-]+\/[\w.:-]+$/.test(value) ? null : "must be provider/id, e.g. anthropic/claude-haiku-4-5 (pi --list-models shows yours)";
+      return typeof value === "string" && /^[\w.-]+\/[\w.:-]+$/.test(value) ? null : "must be provider/id, e.g. anthropic/claude-haiku-5-5 (pi --list-models shows yours)";
     case "number":
       if (typeof value !== "number" || !Number.isFinite(value)) return "must be a number";
       if (spec.integer !== false && !Number.isInteger(value)) return "must be a whole number";

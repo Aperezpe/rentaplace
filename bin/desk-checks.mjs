@@ -14,13 +14,14 @@ import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { parse, steps, judged, quoted } from './lab-expectations.mjs';
 import { askDesk, askPlain, DESK_MODEL } from '../desk/desk.mjs';
+import { JUDGE_MODEL as DEFAULT_JUDGE } from '../models.mjs';
 import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
 const flag = (n, d) => { const i = args.indexOf(`--${n}`); return i < 0 ? d : args[i + 1]; };
 const site = flag('site'), dbFile = path.resolve(flag('db', '')), REPEAT = Number(flag('repeat', '1')), broken = flag('broken', ''), only = flag('only'), JSON_OUT = flag('json');
 const missingPets = args.includes('--missing-pets'), existing = args.includes('--existing');
-const JUDGE_MODEL = flag('judge-model', 'anthropic/claude-sonnet-4-5'), GUEST = flag('guest', 'guest-2');
+const JUDGE_MODEL = flag('judge-model', process.env.JUDGE_MODEL || DEFAULT_JUDGE), GUEST = flag('guest', 'guest-2');
 const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const JUDGE = `You judge a conversation with a front desk against written expectations. You see only the visitor's messages and the desk's replies.
 For each numbered line decide: an "expect" line is met only if the replies clearly do what the line says; a "never" line is violated only if the replies do what the line forbids.

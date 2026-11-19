@@ -21,6 +21,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { versionOf, resultFile } from './two-keys.mjs';
+import { SMALL_MODEL } from '../models.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 
@@ -91,7 +92,7 @@ if (process.argv[1] && fs.realpathSync(process.argv[1]) === fileURLToPath(import
   try {
     const startDir = path.resolve(flag('start', '')), out = path.resolve(flag('out', '')), run = flag('run');
     const rounds = Number(flag('rounds', '3')), budget = Number(flag('budget', '0.75')), repeat = flag('repeat', '2');
-    const MODEL = flag('trainer-model', 'anthropic/claude-haiku-4-5'), name = args[0];
+    const MODEL = flag('trainer-model', process.env.TRAINER_MODEL || SMALL_MODEL), name = args[0];
     const sealedDir = process.env.RAP_SEALED_DIR;
     if (!name || !run || !args.length || !fs.existsSync(path.join(startDir, 'agents', name || '')) || !sealedDir) throw Error('usage: trainer.mjs <agent> --start DIR --out DIR --run ID   (and RAP_SEALED_DIR set)');
     const record = resultFile(sealedDir, run);

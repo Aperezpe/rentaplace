@@ -12,10 +12,11 @@ import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
+import { SMALL_MODEL } from '../models.mjs';
 
 const [outArg, site, dbArg, route, count = '3'] = process.argv.slice(2);
 const out = path.resolve(outArg), dbFile = path.resolve(dbArg);
-const MODEL = process.env.VISITOR_MODEL || 'anthropic/claude-haiku-4-5';
+const MODEL = process.env.VISITOR_MODEL || SMALL_MODEL;
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const STAYS = [['2026-11-16', '2026-11-19'], ['2026-11-30', '2026-12-03'], ['2026-12-14', '2026-12-17'], ['2026-11-10', '2026-11-13']];
 const GUEST = process.env.VISITOR_GUEST || 'guest-1';

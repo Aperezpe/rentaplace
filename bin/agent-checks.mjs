@@ -22,13 +22,14 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { parse, job, contains, quoted, steps, judged, observed } from './lab-expectations.mjs';
+import { SMALL_MODEL, JUDGE_MODEL as DEFAULT_JUDGE } from '../models.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback) => { const i = args.indexOf(`--${name}`); if (i < 0) return fallback; const v = args[i + 1]; args.splice(i, 2); return v; };
 const bool = name => { const i = args.indexOf(`--${name}`); if (i < 0) return false; args.splice(i, 1); return true; };
 const root = path.resolve(flag('project', process.cwd()));
-const AGENT_MODEL = flag('agent-model', process.env.AGENT_MODEL || 'anthropic/claude-haiku-4-5');
-const JUDGE_MODEL = flag('judge-model', process.env.JUDGE_MODEL || 'anthropic/claude-sonnet-4-5');
+const AGENT_MODEL = flag('agent-model', process.env.AGENT_MODEL || SMALL_MODEL);
+const JUDGE_MODEL = flag('judge-model', process.env.JUDGE_MODEL || DEFAULT_JUDGE);
 const REPEAT = Number(flag('repeat', '1'));
 const JSON_OUT = flag('json');
 const CHANGED = flag('changed');
