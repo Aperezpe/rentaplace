@@ -40,6 +40,16 @@ pi install --local git:github.com/johnlindquist/herdr-pi-role     # /agent, in t
 
 Run the third line in this folder, then `/reload` in Pi. `/lab doctor` should answer `Lab workspace ready · lab harness ready`. Then ask Main: `Use the lab to run the first check in lab-scenarios.md`. `/lab new critic` and `/lab test critic` need the third line. The lab works on a copy of this project in `~/.lab/rentaplace`; its reports land in `lab-reports/` and `agents/`. `.pi/` and `lab-reports/` are ignored by Git here.
 
+## Later lessons
+
+`main` is the app as the first lesson uses it. Each later lesson's work is on its own branch, so you can read it or check it out beside the video:
+
+| Lesson | Branch | What it adds |
+| --- | --- | --- |
+| Domain agents | [`d33-domain-agents`](https://github.com/johnlindquist/rentaplace/tree/d33-domain-agents) | A 24-hour hold; Booking and Pricing agents with cited memories, scenario checks and a wake-up |
+| Work that runs without you | [`d4-wake-the-team`](https://github.com/johnlindquist/rentaplace/tree/d4-wake-the-team) | A ticket sorter, drafts from looked-up facts, and an error hunter on a durable host |
+| A front desk for visiting agents | [`d5-open-the-door`](https://github.com/johnlindquist/rentaplace/tree/d5-open-the-door) | A guide, typed tools over MCP, a small desk with limits and receipts, sealed cases, a Trainer and two keys ([`docs/front-desk.md`](https://github.com/johnlindquist/rentaplace/blob/d5-open-the-door/docs/front-desk.md)) |
+
 ## Commands
 
 ```sh
