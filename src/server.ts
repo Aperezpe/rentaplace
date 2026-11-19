@@ -27,14 +27,17 @@ import { flags, setFlag } from './flags.ts';
 import { stats, health } from './domain/ops.ts';
 import { startPages, type Pages } from './pages.ts';
 import { openapi } from './openapi.ts';
+import { mcpEndpoint, type McpVisitor } from './mcp.ts';
+import type { Account } from './types.ts';
 
 
 /** What a visiting agent is told. It informs; only the desk line gives the visitor something to act with. */
-function agentGuide(desk:boolean) {
+function agentGuide(desk:boolean,mcp=false) {
  const door=doorLimits();
  return ['# RentAPlace: a guide for visiting agents','','RentAPlace lists vacation homes. This page is for software agents acting for a guest.','',
  '## Reading the site','- A home has its own page at /homes/<slug>, for example /homes/lakeside-a-frame.','- The price of a stay: GET /api/quote?slug=<slug>&from=YYYY-MM-DD&to=YYYY-MM-DD&guests=<n>. Amounts are in cents; totalCents is what the guest pays.','- Search: GET /api/listings.','- Public house rules: GET /api/listings/<slug>/house-rules. A topic selects one heading.','',
  '## Holds','- A hold keeps a stay\'s nights and its quoted price for 24 hours, for a signed-in guest. It takes no card and no money moves.','- A guest can have at most three active holds at a time. A request for another is refused, with the reason, until one is reserved, released or runs out.',
+ ...(mcp?['','## Typed tools (MCP)',`- For actions, connect an MCP client to POST /mcp (Model Context Protocol, Streamable HTTP, stateless; send the guest's own sign-in with each request). Typed tools: quote, house_rules, place_hold${desk?'; questions: ask_desk, the front desk below':''}. No tool takes payment, reserves, cancels or releases.`,`- Every tool call counts toward the same ${door.visitsPerMinute} a minute per visitor as the desk. A refusal is a tool error carrying the same named code as the API (for example SIGN_IN_REQUIRED, DATES_UNAVAILABLE, TOO_MANY_VISITS).`]:[]),
  ...(desk?['','## The front desk','- To ask a question or to place a hold, write to the front desk: POST /desk with JSON {"message":"<plain words>"}.','- For a hold, say the home, check-in, check-out and number of guests, and send the guest\'s own sign-in. For rules, say the home and topic. Ask for a hold in a separate message.',`- Limits at the door, checked before anything else: a message of up to ${door.maxMessageChars} characters, up to ${door.visitsPerMinute} messages a minute from one visitor (429 TOO_MANY_VISITS with Retry-After), and a daily budget for the desk as a whole (503 DESK_CLOSED_FOR_TODAY; the site and its API keep working).`,'- The desk answers with {"reply","confirmation","replyAgreesWithConfirmation","leftForAPerson","sources","unsupported","receipt"}. "receipt" says how long the answer took and what it cost the site. When a hold was placed, "confirmation" holds its reference, stay, total and expiry, and the guest can read it again at GET /api/holds. Trust "confirmation", which comes from the saved record; "reply" is words. If "replyAgreesWithConfirmation" is false, the words and the record differ: go by the record.','- The desk can quote, look up public house rules and place one hold per guest and stay. It cannot take payment, reserve, refund or cancel; it leaves those for a person.','- The desk attaches sources from passages actually returned by its house-rules tool this turn. Open their addresses on this site. If unsupported is true, no passage backs a house-rule answer in that turn; do not rely on it.']:[]),''].join('\n');
 }
 function isLocal(req: http.IncomingMessage) {return ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress || '');}
@@ -73,34 +76,42 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('POST','/api/holds/:id/release',ctx=>({hold:releaseHold(db,ctx.params.id,ctx.user)}));
  // The front desk: Booking's customer-safe side with quote, place_hold and house_rules (desk/desk.mjs). RAP_DESK=off removes it.
  // The guide for visiting agents. RAP_AGENT_GUIDE: off (no guide), info (how to read the site), desk (the same, plus the desk).
- const GUIDE=process.env.RAP_AGENT_GUIDE || 'desk',DESK_ON=process.env.RAP_DESK!=='off';
- if(GUIDE!=='off')router.on('GET','/llms.txt',ctx=>{ctx.res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});ctx.res.end(agentGuide(GUIDE==='desk' && DESK_ON));});
- if(DESK_ON){
-  const doorFile='../desk/door.mjs',receipts=process.env.RAP_DESK_RECEIPTS || join(ROOT,'desk','receipts.jsonl');
-  // One door per running site. Today's spend is read back from the receipts, so a restart does not reopen a closed desk.
-  let opened:Promise<any>|undefined;
-  const openDoor=()=>opened ??= import(doorFile).then(m=>({...m,door:m.makeDoor({spentToday:m.spentOn(receipts,new Date().toISOString().slice(0,10))})}));
-  router.on('POST','/desk',async ctx=>{
-   const {door,receipt,saveReceipt}=await openDoor();
-   const guest=ctx.user && ctx.user.role==='guest'?{id:ctx.user.id,name:ctx.user.name}:null;
-   const visitor=guest?`guest:${guest.id}`:`address:${ctx.req.socket.remoteAddress || 'unknown'}`,at=new Date().toISOString();
-   // The door, before any model: message size, this visitor's rate, the desk's spend for the day (desk/door.mjs).
-   const admitted=door.admit({visitor,message:typeof ctx.body.message==='string'?ctx.body.message:''});
-   if(!admitted.ok){
-    saveReceipt(receipts,receipt({at,visitor,ms:0,turnedAway:admitted.code}));log('desk.turned_away',{visitor,code:admitted.code});
-    if(admitted.retryAfterSeconds)ctx.res.setHeader('Retry-After',String(admitted.retryAfterSeconds));
-    throw new AppError(admitted.status,admitted.code,admitted.message);
-   }
-   const message=textInput(ctx.body.message,'Message',door.limits.maxMessageChars);
-   const deskFile='../desk/desk.mjs';const {askDesk}=await import(deskFile);
-   const r=await askDesk({message,cookie:guest?String(ctx.req.headers.cookie || ''):'',guest,site:`http://127.0.0.1:${(ctx.req.socket.localPort || PORT)}`,list:process.env.RAP_DESK_LIST || join(ROOT,'desk','for-a-person.jsonl')});
-   door.charge(r.cost);
-   const line=receipt({at,visitor,ms:r.ms,usage:r.usage,cost:r.cost,model:r.model,tools:r.calls.map((c:any)=>c.tool),replyAgrees:r.replyAgrees.ok,held:r.confirmation?.reference || null});
-   saveReceipt(receipts,line);
-   log('desk.answered',{guest:guest?.id || null,held:r.confirmation?.reference || null,forAPerson:!!r.forAPerson,replyAgrees:r.replyAgrees.ok,tools:r.calls.map((c:any)=>c.tool),ms:line.ms,cachedShare:line.cachedShare,costUsd:line.costUsd});
-   return {reply:r.reply,confirmation:r.confirmation,replyAgreesWithConfirmation:r.replyAgrees.ok,leftForAPerson:r.forAPerson?r.forAPerson.asked:null,sources:r.sources,unsupported:r.unsupported,receipt:{ms:line.ms,cachedShare:line.cachedShare,costUsd:line.costUsd}};
-  });
+ const GUIDE=process.env.RAP_AGENT_GUIDE || 'desk',DESK_ON=process.env.RAP_DESK!=='off',MCP_ON=process.env.RAP_MCP!=='off';
+ if(GUIDE!=='off')router.on('GET','/llms.txt',ctx=>{ctx.res.writeHead(200,{'Content-Type':'text/plain; charset=utf-8'});ctx.res.end(agentGuide(GUIDE==='desk' && DESK_ON,GUIDE==='desk' && MCP_ON));});
+ const doorFile='../desk/door.mjs',receipts=process.env.RAP_DESK_RECEIPTS || join(ROOT,'desk','receipts.jsonl');
+ // One door per running site, shared by POST /desk and the MCP tools. Today's spend is read back from the receipts, so a restart does not reopen a closed desk.
+ let opened:Promise<any>|undefined;
+ const openDoor=()=>opened ??= import(doorFile).then(m=>({...m,door:m.makeDoor({spentToday:m.spentOn(receipts,new Date().toISOString().slice(0,10))})}));
+ const visitorOf=(req:http.IncomingMessage,user?:Account)=>{const guest=user && user.role==='guest'?{id:user.id,name:user.name}:null;return {guest,visitor:guest?`guest:${guest.id}`:`address:${req.socket.remoteAddress || 'unknown'}`};};
+ /** A refusal at the door: a receipt that cost nothing, a log line, and a named error (with retryAfterSeconds when the rate was the reason). */
+ const turnedAway=async(admitted:any,visitor:string,tools:string[]=[])=>{
+  const {receipt,saveReceipt}=await openDoor();
+  saveReceipt(receipts,receipt({at:new Date().toISOString(),visitor,ms:0,tools,turnedAway:admitted.code}));log('desk.turned_away',{visitor,code:admitted.code,...(tools.length?{tools}:{})});
+  return Object.assign(new AppError(admitted.status,admitted.code,admitted.message),admitted.retryAfterSeconds?{retryAfterSeconds:admitted.retryAfterSeconds}:{});
+ };
+ /** One visit to the front desk, whichever way it arrived (POST /desk, or the ask_desk tool over MCP): the door, the model, the receipt. */
+ async function deskVisit(req:http.IncomingMessage,user:Account|undefined,raw:unknown) {
+  const {door,receipt,saveReceipt}=await openDoor();
+  const {guest,visitor}=visitorOf(req,user),at=new Date().toISOString();
+  // The door, before any model: message size, this visitor's rate, the desk's spend for the day (desk/door.mjs).
+  const admitted=door.admit({visitor,message:typeof raw==='string'?raw:''});
+  if(!admitted.ok)throw await turnedAway(admitted,visitor);
+  const message=textInput(raw,'Message',door.limits.maxMessageChars);
+  const deskFile='../desk/desk.mjs';const {askDesk}=await import(deskFile);
+  const r=await askDesk({message,cookie:guest?String(req.headers.cookie || ''):'',guest,site:`http://127.0.0.1:${(req.socket.localPort || PORT)}`,list:process.env.RAP_DESK_LIST || join(ROOT,'desk','for-a-person.jsonl')});
+  door.charge(r.cost);
+  const line=receipt({at,visitor,ms:r.ms,usage:r.usage,cost:r.cost,model:r.model,tools:r.calls.map((c:any)=>c.tool),replyAgrees:r.replyAgrees.ok,held:r.confirmation?.reference || null});
+  saveReceipt(receipts,line);
+  log('desk.answered',{guest:guest?.id || null,held:r.confirmation?.reference || null,forAPerson:!!r.forAPerson,replyAgrees:r.replyAgrees.ok,tools:r.calls.map((c:any)=>c.tool),ms:line.ms,cachedShare:line.cachedShare,costUsd:line.costUsd});
+  return {reply:r.reply,confirmation:r.confirmation,replyAgreesWithConfirmation:r.replyAgrees.ok,leftForAPerson:r.forAPerson?r.forAPerson.asked:null,sources:r.sources,unsupported:r.unsupported,receipt:{ms:line.ms,cachedShare:line.cachedShare,costUsd:line.costUsd}};
  }
+ if(DESK_ON)router.on('POST','/desk',async ctx=>{
+  try {return await deskVisit(ctx.req,ctx.user,ctx.body.message);}
+  catch(error:any) {if(error?.retryAfterSeconds)ctx.res.setHeader('Retry-After',String(error.retryAfterSeconds));throw error;}
+ });
+ // Typed tools for visiting agents over MCP (src/mcp.ts). RAP_MCP=off removes the endpoint. A typed call asks no model, so the door
+ // checks this visitor's rate only; ask_desk is a desk visit and passes all three limits.
+ const mcp=MCP_ON?mcpEndpoint({db,admitCall:async(who,tool)=>{const {door}=await openDoor();const admitted=door.admitCall({visitor:who.visitor});if(!admitted.ok)throw await turnedAway(admitted,who.visitor,[tool]);}}):undefined;
  api('GET','/api/bookings',ctx=>({items:guestBookings(db,ctx.user)}));
  api('POST','/api/bookings',ctx=>{const result=createBooking(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
  api('GET','/api/bookings/:id',ctx=>({booking:guestBooking(db,ctx.params.id,ctx.user)}));
@@ -150,7 +161,7 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
    res.setHeader('X-Request-Id',requestId);res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
    const quiet=url.pathname.startsWith('/_next/') || url.pathname.startsWith('/__nextjs');
    if(!quiet)res.on('finish',()=>log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
-   let user;
+   let user:Account|undefined;
    try {
      const hostHeader=req.headers.host || '';
      if(!allowedHost(hostHeader))throw new AppError(403,'HOST_NOT_ALLOWED','Use the local server address.');
@@ -159,6 +170,14 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
        if(originHost!==hostHeader)throw new AppError(403,'ORIGIN_NOT_ALLOWED','This request must come from this local site.');
      }
      user=sessionUser(req,db);
+     if(url.pathname==='/mcp') {
+       if(!mcp)throw new AppError(404,'NOT_FOUND','That page could not be found.');
+       res.setHeader('Cache-Control','no-store');
+       // The visitor's own sign-in passes through, as it does for the desk. The SDK verifies nothing; it hands this to the tools untouched.
+       const who:McpVisitor={user,visitor:visitorOf(req,user).visitor,...(DESK_ON?{askDesk:(message:string)=>deskVisit(req,user,message)}:{})};
+       (req as any).auth={token:'',clientId:who.visitor,scopes:[],extra:who};
+       await mcp.node(req,res);return;
+     }
      const routeMethod=method==='HEAD'?'GET':method;
      const asset=routeMethod==='GET' && /^\/img\/([a-z0-9-]+\/)*[a-z0-9.-]+\.(svg|png|jpg|webp|ico)$/.exec(url.pathname);
      if(asset && !url.pathname.includes('..')) {
@@ -182,7 +201,7 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
      if(err.status>=500 && err.code!=='DESK_CLOSED_FOR_TODAY')log('request.failed',{requestId,message:error instanceof Error?error.message:'Unknown error'});
      if(!res.headersSent) {
        // The desk is spoken to by programs: it answers a refusal as JSON with its code, never as a form's redirect.
-       if(url.pathname.startsWith('/api/') || url.pathname==='/desk')json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
+       if(url.pathname.startsWith('/api/') || url.pathname==='/desk' || url.pathname==='/mcp')json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
        else if(err.status===401)redirect(res,`/signin?next=${encodeURIComponent(method==='GET'?url.pathname+url.search:refererPath(req))}`);
        else if(method!=='GET' && method!=='HEAD')redirect(res,withError(refererPath(req),err.message));
        else json(res,{error:{code:err.code,message:err.message,requestId}},err.status);

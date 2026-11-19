@@ -31,6 +31,16 @@ export function makeDoor({ limits = doorLimits(), now = Date.now, spentToday = 0
   const visits = new Map();
   let spendDay = day(now()), spent = spentToday;
   const roll = () => { const d = day(now()); if (d !== spendDay) { spendDay = d; spent = 0; } };
+  const recentOf = visitor => { const t = now(); return (visits.get(visitor) || []).filter(at => t - at < 60000); };
+  const count = visitor => { const recent = recentOf(visitor); recent.push(now()); visits.set(visitor, recent); };
+  /** @returns {Admitted | null} */
+  const tooMany = visitor => {
+    const t = now(), recent = recentOf(visitor);
+    if (recent.length < limits.visitsPerMinute) return null;
+    visits.set(visitor, recent);
+    const retryAfterSeconds = Math.max(1, Math.ceil((recent[0] + 60000 - t) / 1000));
+    return turnedAway(429, 'TOO_MANY_VISITS', `The desk takes up to ${limits.visitsPerMinute} messages a minute from one visitor. Try again in ${retryAfterSeconds} seconds.`, { retryAfterSeconds });
+  };
   return {
     limits,
     /** Order: size (costs nothing to check), then this visitor's rate, then the desk's spend for the day. */
@@ -39,14 +49,16 @@ export function makeDoor({ limits = doorLimits(), now = Date.now, spentToday = 0
       roll();
       const length = String(message ?? '').length;
       if (length > limits.maxMessageChars) return turnedAway(413, 'MESSAGE_TOO_LONG', `A message to the desk can be up to ${limits.maxMessageChars} characters. This one is ${length}.`);
-      const t = now(), recent = (visits.get(visitor) || []).filter(at => t - at < 60000);
-      if (recent.length >= limits.visitsPerMinute) {
-        visits.set(visitor, recent);
-        const retryAfterSeconds = Math.max(1, Math.ceil((recent[0] + 60000 - t) / 1000));
-        return turnedAway(429, 'TOO_MANY_VISITS', `The desk takes up to ${limits.visitsPerMinute} messages a minute from one visitor. Try again in ${retryAfterSeconds} seconds.`, { retryAfterSeconds });
-      }
+      const busy = tooMany(visitor); if (busy) return busy;
       if (spent >= limits.dailySpendUsd) return turnedAway(503, 'DESK_CLOSED_FOR_TODAY', 'The desk has reached its spending limit for today. The site and its API still work; the desk opens again tomorrow (UTC).');
-      recent.push(t); visits.set(visitor, recent);
+      count(visitor);
+      return { ok: true };
+    },
+    /** A typed tool call that asks no model (quote, house_rules, place_hold over MCP): this visitor's rate only, on the same count as the desk. */
+    /** @param {{visitor: string}} call @returns {Admitted} */
+    admitCall({ visitor }) {
+      const busy = tooMany(visitor); if (busy) return busy;
+      count(visitor);
       return { ok: true };
     },
     charge(usd) { roll(); spent += Number(usd) || 0; return spent; },
