@@ -46,7 +46,7 @@ Every desk visit writes one line to `desk/receipts.jsonl` and returns a short `r
 npm test                                        # includes desk, door, MCP, house rules, sealed, trainer, two keys
 npm start                                       # then, in another terminal:
 curl -s http://127.0.0.1:5180/llms.txt
-node bin/desk-checks.mjs --site http://127.0.0.1:5180 --db db/rentaplace.db --repeat 3
+node bin/desk-checks.mjs --site http://127.0.0.1:5180 --db data/rentaplace.db --repeat 3
 node desk/leak-check.mjs /tmp/leak.json 3
 ```
 
