@@ -1,0 +1,1405 @@
+{
+  "label": "smoke-jev-fresh",
+  "set": "fresh",
+  "runs": 1,
+  "startedAt": "2026-11-21T20:40:53.935Z",
+  "finishedAt": "2026-11-21T20:40:56.572Z",
+  "thinking": "off",
+  "options": [
+    {
+      "name": "haiku",
+      "model": "anthropic/claude-haiku-5-5"
+    },
+    {
+      "name": "sonnet",
+      "model": "anthropic/claude-sonnet-5-5"
+    },
+    {
+      "name": "jev",
+      "model": "jev-latest",
+      "via": "typesafe"
+    }
+  ],
+  "system": "You sort guest support tickets for RentAPlace, a vacation rental marketplace.\nReturn the owner and whether money is involved.\n\nowner:\n- \"booking\": reservations, dates, status (pending, confirmed, declined), check-in, arrival, cancellations.\n- \"pricing\": prices, fees, charges, refunds, payments, deposits, payouts to hosts.\n- \"nobody\": anything else.\n\nmoney: true if the ticket is about money that was charged, paid, owed, refunded, paid out, or will change. Otherwise false.\n\nReply with strict JSON only, exactly {\"owner\":\"booking\"|\"pricing\"|\"nobody\",\"money\":true|false}. No code fences, no other text.",
+  "jevQuestions": {
+    "owner": {
+      "type": "choice",
+      "instructions": "Which team owns this support ticket?",
+      "criteria": {
+        "booking": "The reservation itself: dates, status, confirmation, arrival, host accept or decline, checkout.",
+        "pricing": "What a guest pays, what is refunded, what a host receives: prices, fees, tax, refunds, payouts.",
+        "nobody": "Anything else. Choose this rather than stretch a team to fit."
+      }
+    },
+    "money": {
+      "type": "noul",
+      "instructions": "Is this ticket about money moving or owed: a refund, a charge, a payout, a price or total, compensation, a deposit? A ticket that only contains a money-sounding word is not."
+    }
+  },
+  "jevRule": {
+    "MONEY_P": 0.3,
+    "SURE_P": 0.7,
+    "SURE_OWNER": 0.7
+  },
+  "estimatedCostUsd": 0.003712285000000001,
+  "summaries": [
+    {
+      "option": "keywords",
+      "model": "keyword rules",
+      "calls": 8,
+      "invalid": 0,
+      "ownerAccuracy": 0.625,
+      "moneyAccuracy": 0.5,
+      "unsure": 0,
+      "pass": false,
+      "neverSafe": [
+        "t-01",
+        "t-04",
+        "t-05"
+      ],
+      "sometimesMissed": [],
+      "latencyMs": null,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "costUsd": 0
+    },
+    {
+      "option": "haiku",
+      "model": "claude-haiku-5-5",
+      "calls": 8,
+      "invalid": 0,
+      "ownerAccuracy": 1,
+      "moneyAccuracy": 1,
+      "unsure": 0,
+      "pass": true,
+      "neverSafe": [],
+      "sometimesMissed": [],
+      "latencyMs": {
+        "median": 903,
+        "p95": 916,
+        "max": 916
+      },
+      "inputTokens": 32,
+      "outputTokens": 125,
+      "costUsd": 0.00022281500000000001
+    },
+    {
+      "option": "sonnet",
+      "model": "claude-sonnet-5-5",
+      "calls": 8,
+      "invalid": 0,
+      "ownerAccuracy": 1,
+      "moneyAccuracy": 1,
+      "unsure": 0,
+      "pass": true,
+      "neverSafe": [],
+      "sometimesMissed": [],
+      "latencyMs": {
+        "median": 1464,
+        "p95": 1700,
+        "max": 1700
+      },
+      "inputTokens": 32,
+      "outputTokens": 125,
+      "costUsd": 0.0033347
+    },
+    {
+      "option": "jev",
+      "model": "jev-1.14.0",
+      "calls": 8,
+      "invalid": 0,
+      "ownerAccuracy": 1,
+      "moneyAccuracy": 1,
+      "unsure": 1,
+      "pass": true,
+      "neverSafe": [],
+      "sometimesMissed": [],
+      "latencyMs": {
+        "median": 182,
+        "p95": 265,
+        "max": 265
+      },
+      "inputTokens": 3685,
+      "outputTokens": 450,
+      "costUsd": 0.00015476999999999998
+    }
+  ],
+  "rows": [
+    {
+      "ticket": "t-01",
+      "kind": "money in a question about dates",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": false,
+      "moneyOk": false,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-02",
+      "kind": "money word, compliment",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-03",
+      "kind": "negation, no refund wanted",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": false,
+      "moneyOk": false,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-04",
+      "kind": "host asks about tax",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": false,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-05",
+      "kind": "numbers only",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": false,
+      "moneyOk": false,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-06",
+      "kind": "free cancellation",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-07",
+      "kind": "angry, urgent, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-08",
+      "kind": "two questions, money second",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-01",
+      "kind": "money in a question about dates",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBXPYRabNNCz5DkS9",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000028055
+      },
+      "error": null,
+      "ms": 906,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-02",
+      "kind": "money word, compliment",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBYdVnCYRsFvQTEao",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000028055
+      },
+      "error": null,
+      "ms": 906,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-03",
+      "kind": "negation, no refund wanted",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBZdDZ38Q7WDm8t3x",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.000027805
+      },
+      "error": null,
+      "ms": 903,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-04",
+      "kind": "host asks about tax",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBbMz8yzmXGeMx2hF",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00002868
+      },
+      "error": null,
+      "ms": 916,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-05",
+      "kind": "numbers only",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBXNzRcD9DKgYgb6X",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000027805000000000002
+      },
+      "error": null,
+      "ms": 903,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-06",
+      "kind": "free cancellation",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBZdDMNjV3v1PRg8U",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00002743
+      },
+      "error": null,
+      "ms": 817,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-07",
+      "kind": "angry, urgent, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBaraVSLHqKqAr3xM",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000028305
+      },
+      "error": null,
+      "ms": 903,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-08",
+      "kind": "two questions, money second",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimBYdX1BgARW3rN3Lw",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00002668
+      },
+      "error": null,
+      "ms": 898,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-01",
+      "kind": "money in a question about dates",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimEYTNbCTxebDyZi17",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004209
+      },
+      "error": null,
+      "ms": 1347,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-02",
+      "kind": "money word, compliment",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimF6wHZyhwZVzNCKQn",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004209
+      },
+      "error": null,
+      "ms": 1700,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-03",
+      "kind": "negation, no refund wanted",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimExGXFmKkfBxfhHy3",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.0004159
+      },
+      "error": null,
+      "ms": 1381,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-04",
+      "kind": "host asks about tax",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimF3yNq2rzqUu4tAVf",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004334
+      },
+      "error": null,
+      "ms": 1580,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-05",
+      "kind": "numbers only",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimFC9uxFRnxZJjSdYw",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004159
+      },
+      "error": null,
+      "ms": 1433,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-06",
+      "kind": "free cancellation",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimF3UCRGnXdMfHR75g",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00040840000000000006
+      },
+      "error": null,
+      "ms": 1477,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-07",
+      "kind": "angry, urgent, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimEyFzMGLosrTKZ41E",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004259
+      },
+      "error": null,
+      "ms": 1464,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-08",
+      "kind": "two questions, money second",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGimFAfQANwENr9BGMk7",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.0003934
+      },
+      "error": null,
+      "ms": 1048,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-01",
+      "kind": "money in a question about dates",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "pricing",
+          "confidence": 0.8,
+          "probabilities": {
+            "booking": 0.13,
+            "pricing": 0.87,
+            "nobody": 0
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.89
+        }
+      },
+      "usage": {
+        "input": 463,
+        "output": 56,
+        "costUsd": 0.000019446
+      },
+      "error": null,
+      "ms": 255,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true,
+        "unsure": false,
+        "moneyP": 0.89,
+        "ownerConfidence": 0.8,
+        "ownerProbabilities": {
+          "booking": 0.13,
+          "pricing": 0.87,
+          "nobody": 0
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-02",
+      "kind": "money word, compliment",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "nobody",
+          "confidence": 0.91,
+          "probabilities": {
+            "booking": 0.01,
+            "pricing": 0.05,
+            "nobody": 0.94
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.09
+        }
+      },
+      "usage": {
+        "input": 458,
+        "output": 57,
+        "costUsd": 0.000019236
+      },
+      "error": null,
+      "ms": 180,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false,
+        "unsure": false,
+        "moneyP": 0.09,
+        "ownerConfidence": 0.91,
+        "ownerProbabilities": {
+          "booking": 0.01,
+          "pricing": 0.05,
+          "nobody": 0.94
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-03",
+      "kind": "negation, no refund wanted",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "booking",
+          "confidence": 1,
+          "probabilities": {
+            "booking": 1,
+            "pricing": 0,
+            "nobody": 0
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.11
+        }
+      },
+      "usage": {
+        "input": 462,
+        "output": 56,
+        "costUsd": 0.000019404
+      },
+      "error": null,
+      "ms": 108,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false,
+        "unsure": false,
+        "moneyP": 0.11,
+        "ownerConfidence": 1,
+        "ownerProbabilities": {
+          "booking": 1,
+          "pricing": 0,
+          "nobody": 0
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-04",
+      "kind": "host asks about tax",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "pricing",
+          "confidence": 1,
+          "probabilities": {
+            "booking": 0,
+            "pricing": 1,
+            "nobody": 0
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.84
+        }
+      },
+      "usage": {
+        "input": 462,
+        "output": 56,
+        "costUsd": 0.000019404
+      },
+      "error": null,
+      "ms": 182,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true,
+        "unsure": false,
+        "moneyP": 0.84,
+        "ownerConfidence": 1,
+        "ownerProbabilities": {
+          "booking": 0,
+          "pricing": 1,
+          "nobody": 0
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-05",
+      "kind": "numbers only",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "pricing",
+          "confidence": 1,
+          "probabilities": {
+            "booking": 0,
+            "pricing": 1,
+            "nobody": 0
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.94
+        }
+      },
+      "usage": {
+        "input": 465,
+        "output": 56,
+        "costUsd": 0.00001953
+      },
+      "error": null,
+      "ms": 136,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true,
+        "unsure": false,
+        "moneyP": 0.94,
+        "ownerConfidence": 1,
+        "ownerProbabilities": {
+          "booking": 0,
+          "pricing": 1,
+          "nobody": 0
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-06",
+      "kind": "free cancellation",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "pricing",
+          "confidence": 0.97,
+          "probabilities": {
+            "booking": 0.02,
+            "pricing": 0.98,
+            "nobody": 0
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.85
+        }
+      },
+      "usage": {
+        "input": 458,
+        "output": 56,
+        "costUsd": 0.000019236
+      },
+      "error": null,
+      "ms": 265,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true,
+        "unsure": false,
+        "moneyP": 0.85,
+        "ownerConfidence": 0.97,
+        "ownerProbabilities": {
+          "booking": 0.02,
+          "pricing": 0.98,
+          "nobody": 0
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": false,
+      "safe": true
+    },
+    {
+      "ticket": "t-07",
+      "kind": "angry, urgent, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "nobody",
+          "confidence": 0.98,
+          "probabilities": {
+            "booking": 0.01,
+            "pricing": 0,
+            "nobody": 0.99
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.03
+        }
+      },
+      "usage": {
+        "input": 460,
+        "output": 57,
+        "costUsd": 0.000019319999999999998
+      },
+      "error": null,
+      "ms": 120,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false,
+        "unsure": false,
+        "moneyP": 0.03,
+        "ownerConfidence": 0.98,
+        "ownerProbabilities": {
+          "booking": 0.01,
+          "pricing": 0,
+          "nobody": 0.99
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false,
+      "unsure": false,
+      "safe": false
+    },
+    {
+      "ticket": "t-08",
+      "kind": "two questions, money second",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "jev",
+      "modelRequested": "jev-latest",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "status": 200,
+      "modelReported": "jev-1.14.0",
+      "raw": {
+        "owner": {
+          "type": "choice",
+          "choice": "booking",
+          "confidence": 0.85,
+          "probabilities": {
+            "booking": 0.9,
+            "pricing": 0.09,
+            "nobody": 0.01
+          }
+        },
+        "money": {
+          "type": "noul",
+          "noul": 0.56
+        }
+      },
+      "usage": {
+        "input": 457,
+        "output": 56,
+        "costUsd": 0.000019194
+      },
+      "error": null,
+      "ms": 259,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true,
+        "unsure": true,
+        "moneyP": 0.56,
+        "ownerConfidence": 0.85,
+        "ownerProbabilities": {
+          "booking": 0.9,
+          "pricing": 0.09,
+          "nobody": 0.01
+        }
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true,
+      "unsure": true,
+      "safe": true
+    }
+  ]
+}

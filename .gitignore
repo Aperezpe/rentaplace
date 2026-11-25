@@ -1,5 +1,10 @@
 data/*.db*
 data/session.key
+data/watcher/
+data/drafts/
+data/hunts/
+data/visits/
+data/desk/
 logs/
 outbox/
 .env
@@ -11,3 +16,4 @@ next-env.d.ts
 *.tsbuildinfo
 .pi/
 lab-reports/
+widgets/*/state/

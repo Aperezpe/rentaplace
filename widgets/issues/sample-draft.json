@@ -1,0 +1,60 @@
+{
+  "ticketId": "a0a084b1-56ba-4810-bc8f-701c4a97504f",
+  "question": {
+    "subject": "Weekend price",
+    "message": "How much would the Lakeside A-Frame be from Nov 20 to Nov 23 for 2 guests? I want to know the total with fees."
+  },
+  "stay": {
+    "kind": "quote",
+    "slug": "lakeside-a-frame",
+    "home": "Lakeside A-Frame",
+    "from": "2026-11-20",
+    "to": "2026-11-23",
+    "guests": 2
+  },
+  "facts": [
+    {
+      "fact": "home",
+      "value": "Lakeside A-Frame"
+    },
+    {
+      "fact": "dates",
+      "value": "2026-11-20 to 2026-11-23 (checkout 2026-11-23)"
+    },
+    {
+      "fact": "guests",
+      "value": "2"
+    },
+    {
+      "fact": "nights",
+      "value": "3"
+    },
+    {
+      "fact": "availability",
+      "value": "available for these dates (quote, nothing is held)"
+    },
+    {
+      "fact": "nightly rate",
+      "value": "$110.00 weeknight x 1, $140.00 Friday and Saturday x 2; accommodation $390.00"
+    },
+    {
+      "fact": "cleaning",
+      "value": "$60.00"
+    },
+    {
+      "fact": "service fee",
+      "value": "$54.00"
+    },
+    {
+      "fact": "taxes",
+      "value": "$36.00"
+    },
+    {
+      "fact": "total",
+      "value": "$540.00"
+    }
+  ],
+  "reply": "Hi there,\n\nThe Lakeside A-Frame is available for 2 guests from November 20 to November 23, 2026 (3 nights, checkout November 23). Here is the breakdown:\n\n- Nightly rate: $110.00 for the weeknight, plus $140.00 for each of Friday and Saturday, for accommodation of $390.00\n- Cleaning fee: $60.00\n- Service fee: $54.00\n- Taxes: $36.00\n- Total: $540.00\n\nThese dates are open, but nothing is held or reserved yet. If you'd like to book, just let us know and we can get a reservation started for you. Placing a hold never charges you.\n\nBest,\nRentAPlace Booking",
+  "model": "anthropic/claude-haiku-5-5",
+  "at": "2026-11-23T00:52:45.923Z"
+}

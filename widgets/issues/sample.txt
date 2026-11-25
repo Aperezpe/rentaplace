@@ -1,0 +1,30 @@
+{
+ "summary": "2 waiting for a person, 1 not sorted, 0 sorted",
+ "items": [
+  {
+   "id": "a0a084b1-56ba-4810-bc8f-701c4a97504f",
+   "owner": "pricing",
+   "state": "waiting",
+   "level": "warn",
+   "title": "pricing · Weekend price · draft",
+   "detail": "a0a084b1-56ba-4810-bc8f-701c4a97504f · money · money: moneyP 0.82 >= 0.3 · owner pricing at confidence 0.98",
+   "draft_file": "widgets/issues/sample-draft.json"
+  },
+  {
+   "id": "d8f36226-afbc-45a8-942a-d05ffb4411cf",
+   "owner": "booking",
+   "state": "waiting",
+   "level": "warn",
+   "title": "booking · need some help, urgent",
+   "detail": "d8f36226-afbc-45a8-942a-d05ffb4411cf · money, unsure · money: moneyP 0.87 >= 0.3 · owner booking at confidence 0.28 · unsure: owner confidence 0.28 < 0.7"
+  },
+  {
+   "id": "ticket-0028",
+   "owner": null,
+   "state": "not sorted",
+   "level": "info",
+   "title": "not sorted · Pet policy question",
+   "detail": "ticket-0028"
+  }
+ ]
+}

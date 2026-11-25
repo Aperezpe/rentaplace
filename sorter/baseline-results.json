@@ -1,0 +1,616 @@
+{
+  "rules": {
+    "MONEY_WORDS": [
+      "refund",
+      "charge",
+      "fee",
+      "price",
+      "payout",
+      "deposit",
+      "total",
+      "pay",
+      "paid",
+      "cost",
+      "free"
+    ],
+    "BOOKING_WORDS": [
+      "dates",
+      "pending",
+      "confirmed",
+      "check-in",
+      "arrive",
+      "cancel",
+      "reservation",
+      "declined"
+    ],
+    "PRICING_WORDS": [
+      "refund",
+      "charge",
+      "fee",
+      "price",
+      "rate",
+      "payout",
+      "deposit",
+      "cost",
+      "total",
+      "discount",
+      "tax"
+    ],
+    "precedence": "pricing > booking > nobody"
+  },
+  "total": 16,
+  "ownerAccuracy": 0.75,
+  "moneyAccuracy": 0.6875,
+  "ownerCorrect": 12,
+  "moneyCorrect": 11,
+  "misses": [
+    {
+      "id": "k-01",
+      "kind": "double charge, no money word",
+      "subject": "Seeing double",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": false
+    },
+    {
+      "id": "k-02",
+      "kind": "money word, no money",
+      "subject": "Parking",
+      "got": {
+        "owner": "nobody",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [
+          "free"
+        ],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-04",
+      "kind": "broken heating, wants compensation",
+      "subject": "Freezing all weekend",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "nobody",
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-06",
+      "kind": "date change, price changes",
+      "subject": "Extend the trip",
+      "got": {
+        "owner": "nobody",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "pay"
+        ],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": true
+    },
+    {
+      "id": "k-08",
+      "kind": "host payout short, no money word",
+      "subject": "Missing a night",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": false
+    },
+    {
+      "id": "k-10",
+      "kind": "money word, no money",
+      "subject": "Check-in time",
+      "got": {
+        "owner": "booking",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [
+          "paid"
+        ],
+        "pricing": [],
+        "booking": [
+          "check-in",
+          "confirmed"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-13",
+      "kind": "damage claim",
+      "subject": "Damage charge",
+      "got": {
+        "owner": "pricing",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "charge",
+          "pay"
+        ],
+        "pricing": [
+          "charge"
+        ],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": true
+    }
+  ],
+  "rows": [
+    {
+      "id": "k-01",
+      "kind": "double charge, no money word",
+      "subject": "Seeing double",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": false
+    },
+    {
+      "id": "k-02",
+      "kind": "money word, no money",
+      "subject": "Parking",
+      "got": {
+        "owner": "nobody",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [
+          "free"
+        ],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-03",
+      "kind": "slow site",
+      "subject": "Calendar is slow",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-04",
+      "kind": "broken heating, wants compensation",
+      "subject": "Freezing all weekend",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "nobody",
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-05",
+      "kind": "plain date change",
+      "subject": "Arrive a day later",
+      "got": {
+        "owner": "booking",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": [
+          "arrive"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-06",
+      "kind": "date change, price changes",
+      "subject": "Extend the trip",
+      "got": {
+        "owner": "nobody",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "pay"
+        ],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": true
+    },
+    {
+      "id": "k-07",
+      "kind": "refund request",
+      "subject": "Cancelled trip",
+      "got": {
+        "owner": "pricing",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "refund"
+        ],
+        "pricing": [
+          "refund"
+        ],
+        "booking": [
+          "cancelled",
+          "reservation"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-08",
+      "kind": "host payout short, no money word",
+      "subject": "Missing a night",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": false
+    },
+    {
+      "id": "k-09",
+      "kind": "pending status",
+      "subject": "Still pending",
+      "got": {
+        "owner": "booking",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": [
+          "pending",
+          "reservation",
+          "confirmed"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-10",
+      "kind": "money word, no money",
+      "subject": "Check-in time",
+      "got": {
+        "owner": "booking",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [
+          "paid"
+        ],
+        "pricing": [],
+        "booking": [
+          "check-in",
+          "confirmed"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": false
+    },
+    {
+      "id": "k-11",
+      "kind": "fee question",
+      "subject": "What is this fee",
+      "got": {
+        "owner": "pricing",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "fee"
+        ],
+        "pricing": [
+          "fee",
+          "rate"
+        ],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-12",
+      "kind": "safety, border",
+      "subject": "Broken lock",
+      "got": {
+        "owner": "booking",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "nobody",
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": [
+          "arrive"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-13",
+      "kind": "damage claim",
+      "subject": "Damage charge",
+      "got": {
+        "owner": "pricing",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "charge",
+          "pay"
+        ],
+        "pricing": [
+          "charge"
+        ],
+        "booking": []
+      },
+      "ownerOk": false,
+      "moneyOk": true
+    },
+    {
+      "id": "k-14",
+      "kind": "deposit by transfer",
+      "subject": "Sent the deposit",
+      "got": {
+        "owner": "pricing",
+        "money": true
+      },
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "matched": {
+        "money": [
+          "deposit"
+        ],
+        "pricing": [
+          "deposit"
+        ],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-15",
+      "kind": "host declined",
+      "subject": "Declined?",
+      "got": {
+        "owner": "booking",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": [
+          "declined",
+          "dates"
+        ]
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    },
+    {
+      "id": "k-16",
+      "kind": "amenities",
+      "subject": "Wifi and towels",
+      "got": {
+        "owner": "nobody",
+        "money": false
+      },
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "matched": {
+        "money": [],
+        "pricing": [],
+        "booking": []
+      },
+      "ownerOk": true,
+      "moneyOk": true
+    }
+  ]
+}

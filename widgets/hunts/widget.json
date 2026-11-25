@@ -1,0 +1,14 @@
+{
+  "name": "hunts",
+  "description": "Saved error hunt reports as cards: request count, whether the replay failed the same way, and which requests failed, still worked or neither. Read only, no model. Enter sends the selected report to Main.",
+  "source": { "type": "command", "command": "node --disable-warning=ExperimentalWarning src/hunts.ts" },
+  "judge": false,
+  "model": "none",
+  "thinking": "off",
+  "actions": [
+    { "key": "s", "label": "send report to Main", "type": "send", "template": "{{report}}\n\nRead it and tell me what you would check first. Do not change any code yet." }
+  ],
+  "refresh_seconds": 30,
+  "item_fields": [],
+  "created": "2026-11-23T00:00:00.000Z"
+}

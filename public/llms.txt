@@ -1,0 +1,22 @@
+# Holding a stay
+
+## Get a price
+
+GET /api/quote?slug=<slug>&from=<check-in>&to=<check-out>&guests=<guests>
+
+The slug is the last part of the home's page address, /homes/<slug>. Dates are YYYY-MM-DD; the stay ends on the morning of the check-out date. The response gives each night's price, the fees and tax, and totalCents, the total in US cents.
+
+## What a hold is
+
+A hold keeps the nights for you and locks the quoted price for 24 hours. It needs no card and takes no money. After 24 hours it runs out and the nights are free again.
+
+## Place a hold
+
+POST /api/holds
+Content-Type: application/json
+
+{"slug":"<slug>","from":"<check-in>","to":"<check-out>","guests":<guests>}
+
+Send it signed in as the guest. A 201 response returns the hold.
+
+If you ask the desk (POST /desk) and its confirmation disagrees with its reply, trust the confirmation.

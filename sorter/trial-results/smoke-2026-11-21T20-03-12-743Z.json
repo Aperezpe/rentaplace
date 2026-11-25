@@ -1,0 +1,1573 @@
+{
+  "label": "smoke",
+  "runs": 1,
+  "startedAt": "2026-11-21T20:03:12.743Z",
+  "finishedAt": "2026-11-21T20:03:17.715Z",
+  "thinking": "off",
+  "options": [
+    {
+      "name": "haiku",
+      "model": "anthropic/claude-haiku-5-5"
+    },
+    {
+      "name": "sonnet",
+      "model": "anthropic/claude-sonnet-5-5"
+    }
+  ],
+  "system": "You sort guest support tickets for RentAPlace, a vacation rental marketplace.\nReturn the owner and whether money is involved.\n\nowner:\n- \"booking\": reservations, dates, status (pending, confirmed, declined), check-in, arrival, cancellations.\n- \"pricing\": prices, fees, charges, refunds, payments, deposits, payouts to hosts.\n- \"nobody\": anything else.\n\nmoney: true if the ticket is about money that was charged, paid, owed, refunded, paid out, or will change. Otherwise false.\n\nReply with strict JSON only, exactly {\"owner\":\"booking\"|\"pricing\"|\"nobody\",\"money\":true|false}. No code fences, no other text.",
+  "estimatedCostUsd": 0.035183589999999994,
+  "summaries": [
+    {
+      "option": "keywords",
+      "model": "keyword rules",
+      "calls": 16,
+      "invalid": 0,
+      "ownerAccuracy": 0.75,
+      "moneyAccuracy": 0.6875,
+      "pass": false,
+      "neverFlagged": [
+        "k-01",
+        "k-04",
+        "k-08"
+      ],
+      "sometimesMissed": []
+    },
+    {
+      "option": "haiku",
+      "model": "claude-haiku-5-5",
+      "calls": 16,
+      "invalid": 0,
+      "ownerAccuracy": 0.9375,
+      "moneyAccuracy": 1,
+      "pass": true,
+      "neverFlagged": [],
+      "sometimesMissed": []
+    },
+    {
+      "option": "sonnet",
+      "model": "claude-sonnet-5-5",
+      "calls": 16,
+      "invalid": 0,
+      "ownerAccuracy": 0.9375,
+      "moneyAccuracy": 1,
+      "pass": true,
+      "neverFlagged": [],
+      "sometimesMissed": []
+    }
+  ],
+  "rows": [
+    {
+      "ticket": "k-01",
+      "kind": "double charge, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": false,
+      "moneyOk": false,
+      "flagged": false
+    },
+    {
+      "ticket": "k-02",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": false,
+      "flagged": true
+    },
+    {
+      "ticket": "k-03",
+      "kind": "slow site",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-04",
+      "kind": "broken heating, wants compensation",
+      "key": {
+        "owner": [
+          "nobody",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": false,
+      "flagged": false
+    },
+    {
+      "ticket": "k-05",
+      "kind": "plain date change",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-06",
+      "kind": "date change, price changes",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": true
+      },
+      "ownerOk": false,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-07",
+      "kind": "refund request",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-08",
+      "kind": "host payout short, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": false,
+      "moneyOk": false,
+      "flagged": false
+    },
+    {
+      "ticket": "k-09",
+      "kind": "pending status",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-10",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": false,
+      "flagged": true
+    },
+    {
+      "ticket": "k-11",
+      "kind": "fee question",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-12",
+      "kind": "safety, border",
+      "key": {
+        "owner": [
+          "nobody",
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-13",
+      "kind": "damage claim",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": false,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-14",
+      "kind": "deposit by transfer",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-15",
+      "kind": "host declined",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-16",
+      "kind": "amenities",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "keywords",
+      "modelRequested": "keyword rules (sorter/baseline.mjs)",
+      "modelReported": "keyword rules",
+      "run": 1,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-01",
+      "kind": "double charge, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWBeQYkY9q4yXyhFY",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00018927499999999998
+      },
+      "error": null,
+      "ms": 859,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-02",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWDdnPc8SReHa2jbg",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00018889999999999998
+      },
+      "error": null,
+      "ms": 822,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-03",
+      "kind": "slow site",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWGMhY8wi2KcF21hQ",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00018889999999999998
+      },
+      "error": null,
+      "ms": 843,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-04",
+      "kind": "broken heating, wants compensation",
+      "key": {
+        "owner": [
+          "nobody",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftW9fGmgFqErSFuEEq",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0001894
+      },
+      "error": null,
+      "ms": 817,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-05",
+      "kind": "plain date change",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWB9o7Gj7n36uSqmc",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.000189025
+      },
+      "error": null,
+      "ms": 817,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-06",
+      "kind": "date change, price changes",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWENGRbHwCZPQ93oA",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00018865
+      },
+      "error": null,
+      "ms": 801,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-07",
+      "kind": "refund request",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWHLvNx1b4Cgv9n4v",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00018864999999999998
+      },
+      "error": null,
+      "ms": 833,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-08",
+      "kind": "host payout short, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftWP3u4FeTFLMSwU9q",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00018815
+      },
+      "error": null,
+      "ms": 863,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-09",
+      "kind": "pending status",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZNPT9f19yjAyDhNJ",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00002643
+      },
+      "error": null,
+      "ms": 735,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-10",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZTqcQ5ikmvoQYcB2",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.000026805
+      },
+      "error": null,
+      "ms": 740,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-11",
+      "kind": "fee question",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZc21N5pNhrw4MndP",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00002718
+      },
+      "error": null,
+      "ms": 777,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-12",
+      "kind": "safety, border",
+      "key": {
+        "owner": [
+          "nobody",
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZU5q2NDCjiPUteG2",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000027305
+      },
+      "error": null,
+      "ms": 759,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-13",
+      "kind": "damage claim",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZa3HqJAo2zhdsK9n",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000027305
+      },
+      "error": null,
+      "ms": 819,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": false,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-14",
+      "kind": "deposit by transfer",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZWpMeUgr2CXWQRaa",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000028055
+      },
+      "error": null,
+      "ms": 797,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-15",
+      "kind": "host declined",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZbHJGbpyHm3bExxX",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.000026555
+      },
+      "error": null,
+      "ms": 725,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-16",
+      "kind": "amenities",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "haiku",
+      "modelRequested": "anthropic/claude-haiku-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-haiku-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftZeFr68A6jfbhTVt3",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.000026805
+      },
+      "error": null,
+      "ms": 756,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-01",
+      "kind": "double charge, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcfagUfmygHcFnGRP",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.003788
+      },
+      "error": null,
+      "ms": 1552,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-02",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcfL1CHius9ZeDE4X",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037805
+      },
+      "error": null,
+      "ms": 1431,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-03",
+      "kind": "slow site",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcf5s59PeZ2hyhu22",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037805
+      },
+      "error": null,
+      "ms": 1285,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-04",
+      "kind": "broken heating, wants compensation",
+      "key": {
+        "owner": [
+          "nobody",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcfpp16UkyKK6X2ns",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037905
+      },
+      "error": null,
+      "ms": 1692,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-05",
+      "kind": "plain date change",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcgpdHXd5GhP5W3n2",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.0037830000000000003
+      },
+      "error": null,
+      "ms": 1704,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-06",
+      "kind": "date change, price changes",
+      "key": {
+        "owner": [
+          "booking",
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftck31g9xN2ZNKcawD",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037855000000000002
+      },
+      "error": null,
+      "ms": 1764,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-07",
+      "kind": "refund request",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcsj2fjJFJ7EQ7ciU",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037755
+      },
+      "error": null,
+      "ms": 1843,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-08",
+      "kind": "host payout short, no money word",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftcqVNxr5FG6AHUckV",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0037655
+      },
+      "error": null,
+      "ms": 1318,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-09",
+      "kind": "pending status",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGfti8yc4pNUaDoMnFy8",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00038840000000000006
+      },
+      "error": null,
+      "ms": 1704,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-10",
+      "kind": "money word, no money",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftiSb2qdRtrsEaJ2XM",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.00039590000000000003
+      },
+      "error": null,
+      "ms": 1342,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-11",
+      "kind": "fee question",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftiVouCwbdxvmNxrUz",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00040340000000000005
+      },
+      "error": null,
+      "ms": 1454,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-12",
+      "kind": "safety, border",
+      "key": {
+        "owner": [
+          "nobody",
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftj5Hn93QHdjqJDXNb",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004059
+      },
+      "error": null,
+      "ms": 1629,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-13",
+      "kind": "damage claim",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftjiVNLGQxdtyUdwee",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004059
+      },
+      "error": null,
+      "ms": 1426,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": false,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-14",
+      "kind": "deposit by transfer",
+      "key": {
+        "owner": [
+          "pricing"
+        ],
+        "money": true
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"pricing\",\"money\":true}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftjrv83kEKQcRQ8bUo",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.0004209
+      },
+      "error": null,
+      "ms": 744,
+      "answer": {
+        "valid": true,
+        "owner": "pricing",
+        "money": true
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": true
+    },
+    {
+      "ticket": "k-15",
+      "kind": "host declined",
+      "key": {
+        "owner": [
+          "booking"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"booking\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftk9msWQ9fnC3f5GRn",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 15,
+        "costUsd": 0.0003909
+      },
+      "error": null,
+      "ms": 1578,
+      "answer": {
+        "valid": true,
+        "owner": "booking",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    },
+    {
+      "ticket": "k-16",
+      "kind": "amenities",
+      "key": {
+        "owner": [
+          "nobody"
+        ],
+        "money": false
+      },
+      "option": "sonnet",
+      "modelRequested": "anthropic/claude-sonnet-5-5",
+      "thinking": "off",
+      "run": 1,
+      "attempts": 1,
+      "ok": true,
+      "text": "{\"owner\":\"nobody\",\"money\":false}",
+      "modelReported": "claude-sonnet-5-5",
+      "provider": "anthropic",
+      "responseId": "msg_011ChGftkY6D7A8ULXN7nUm1",
+      "stopReason": "stop",
+      "usage": {
+        "input": 4,
+        "output": 16,
+        "costUsd": 0.00039590000000000003
+      },
+      "error": null,
+      "ms": 1482,
+      "answer": {
+        "valid": true,
+        "owner": "nobody",
+        "money": false
+      },
+      "ownerOk": true,
+      "moneyOk": true,
+      "flagged": false
+    }
+  ]
+}

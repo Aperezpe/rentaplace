@@ -10,7 +10,7 @@ import type { Context } from './router.ts';
 import { ROOT, PORT, today } from './config.ts';
 import { sessionUser, signIn, signOut, safeNext, requireUser, localOnly } from './auth.ts';
 import { AppError, integer, requireValue } from './errors.ts';
-import { log, readLogs } from './log.ts';
+import { log, readLogs, replayFields } from './log.ts';
 import { search, parseSearch } from './domain/search.ts';
 import { listingBySlug } from './db.ts';
 import { quote, createBooking, guestBookings, guestBooking, cancelBooking, respondToReservation, flushOutbox } from './domain/bookings.ts';
@@ -19,7 +19,13 @@ import { hostListings, ownedListing, saveListing } from './domain/listings.ts';
 import { hostCalendar, listingCalendar, blockDates, unblockDates } from './domain/calendar.ts';
 import { dashboard, reservations } from './domain/host.ts';
 import { hostPayouts, payoutsCsv } from './domain/payouts.ts';
-import { createTicket, tickets } from './domain/support.ts';
+import { createTicket, tickets, supportStay } from './domain/support.ts';
+import { rulePassage, rulePassages, RULE_TOPIC_IDS, type RuleTopicId } from './domain/rules.ts';
+import { desk, type Ask } from './desk.ts';
+import { DeskGate, type DeskLimits, type Clock } from './desk-limits.ts';
+import { newMeter, toolsRun, writeReceipt } from './desk-receipts.ts';
+import { handleMcp } from './mcp.ts';
+import { DESK_DIR } from './config.ts';
 import { createFeedback } from './domain/feedback.ts';
 import { flags, setFlag } from './flags.ts';
 import { stats, health } from './domain/ops.ts';
@@ -35,8 +41,9 @@ function refererPath(req: http.IncomingMessage) {
 function withError(path:string,message:string) {const next=new URL(path,'http://localhost');next.searchParams.delete('saved');next.searchParams.set('error',message);return next.pathname+next.search;}
 
 /** The HTTP app: JSON API, form posts, images and logs. Pages, when attached, render every other GET. */
-export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
+export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages, options: { deskAsk?: Ask; deskDir?: string; deskLimits?: DeskLimits; deskClock?: Clock } = {}) {
  const router=new Router();
+ const deskGate=new DeskGate(db,options.deskLimits,options.deskClock);
  const home=(slug:string)=>{const h=listingBySlug(db,slug);if(!h)throw new AppError(404,'NOT_FOUND','We could not find that home.');return h;};
  const host=(ctx:Context)=>requireUser(ctx.user,'host');
  const api=(method:string,path:string,fn:(c:Context)=>unknown)=>router.on(method,path,fn);
@@ -52,6 +59,11 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('POST','/api/auth/signout',ctx=>{signOut(ctx.res);return {signedOut:true};});
  api('GET','/api/listings',ctx=>{const result=search(db,parseSearch(ctx.url.searchParams));ctx.res.setHeader('Server-Timing',`search;dur=${result.searchMs}`);return result;});
  api('GET','/api/listings/:slug',ctx=>{const h=home(ctx.params.slug);return {home:h,host:db.prepare('SELECT id,name FROM users WHERE id=?').get(h.host_id),reviews:db.prepare('SELECT rating,text,created_at FROM reviews WHERE listing_id=? ORDER BY created_at DESC LIMIT 20').all(h.id),calendar:listingCalendar(db,h,ctx.url.searchParams.get('month') || today().slice(0,7))};});
+ // A home's published rules: all passages, or with ?topic= exactly one. No passage on that topic is 404 NO_PASSAGE.
+ api('GET','/api/listings/:slug/rules',ctx=>{const h=home(ctx.params.slug),topic=ctx.url.searchParams.get('topic');
+  if(!topic)return {slug:h.slug,home:h.title,passages:rulePassages(db,h)};
+  requireValue(RULE_TOPIC_IDS.includes(topic as RuleTopicId),`Choose a topic: ${RULE_TOPIC_IDS.join(', ')}.`);
+  const p=rulePassage(db,h,topic as RuleTopicId);if(!p)throw new AppError(404,'NO_PASSAGE',`${h.title} publishes no rule on that topic.`);return {passage:p};});
  api('GET','/api/quote',ctx=>quote(db,ctx.url.searchParams.get('slug') || '',ctx.url.searchParams.get('from') || '',ctx.url.searchParams.get('to') || '',integer(ctx.url.searchParams.get('guests') || 2,'Guests',1,20),ctx.user));
  api('GET','/api/holds',ctx=>({items:guestHolds(db,ctx.user)}));
  api('POST','/api/holds',ctx=>{const result=placeHold(db,ctx.body,ctx.user);json(ctx.res,result,result.replayed?200:201);});
@@ -75,6 +87,7 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('GET','/api/host/payouts.csv',sendCsv);
  api('GET','/api/support',ctx=>{localOnly(ctx.req);return {items:tickets(db)};});
  api('POST','/api/support',ctx=>json(ctx.res,{ticket:createTicket(db,ctx.body,ctx.user)},201));
+ api('GET','/api/support/:id/stay',ctx=>{localOnly(ctx.req);return {stay:supportStay(db,ctx.params.id)};});
  api('GET','/api/feedback',ctx=>{localOnly(ctx.req);return {items:db.prepare('SELECT * FROM feedback ORDER BY created_at DESC,rowid DESC LIMIT 100').all()};});
  api('POST','/api/feedback',ctx=>json(ctx.res,{feedback:createFeedback(db,ctx.body,ctx.user)},201));
  api('GET','/api/flags',ctx=>{localOnly(ctx.req);return {items:flags(db)};});
@@ -82,6 +95,28 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
  api('GET','/api/logs',ctx=>{localOnly(ctx.req);return {items:readLogs({slow:ctx.url.searchParams.get('slow')==='1',errors:ctx.url.searchParams.get('errors')==='1',limit:integer(ctx.url.searchParams.get('limit')||100,'Limit',1,1000)})};});
  router.on('POST','/book/:slug',ctx=>{requireValue(ctx.body.agree==='1','Please review the house rules and cancellation policy.');const result=createBooking(db,{...ctx.body,slug:ctx.params.slug},ctx.user);redirect(ctx.res,`/bookings/${result.booking.id}`);});
  router.on('POST','/trips/:id/cancel',ctx=>{cancelBooking(db,ctx.params.id,ctx.user);redirect(ctx.res,'/trips?saved=1');});
+ // The guest desk answers in JSON. Its tools call this API back with the guest's own sign-in cookie.
+ // Every visit gets one receipt line, refusals included (no sign-in, too long, rate, budget), written whatever happens.
+ router.on('POST','/desk',async ctx=>{
+  const start=performance.now(),meter=newMeter(),dir=options.deskDir ?? DESK_DIR;
+  const receipt=(outcome:'answered'|'refused'|'failed',code:string|null,agreement:{confirmation:boolean;sources:boolean}|null)=>writeReceipt(dir,{
+   at:new Date().toISOString(),requestId:ctx.requestId,visitor:ctx.user?.id ?? null,durationMs:Math.round(performance.now()-start),outcome,code,
+   promptTokens:meter.promptTokens,cachedTokens:meter.cachedTokens,costUsd:meter.costUsd,tools:toolsRun(dir,ctx.requestId),agreement});
+  try {
+   const guest=requireUser(ctx.user,'guest');const cookie=(ctx.req.headers.cookie || '').split(';').map(v=>v.trim()).find(v=>v.startsWith('rap_session='))!.slice(12);
+   // RAP_DESK_TOOLS_BASE points the desk's tools somewhere else, read per request; the desk checks use it to make the site unreachable.
+   const base=process.env.RAP_DESK_TOOLS_BASE || `http://127.0.0.1:${ctx.req.socket.localPort}`;
+   const result=await desk({message:ctx.body.message,guest,cookie,base,requestId:ctx.requestId},{ask:options.deskAsk,dir,db,gate:deskGate,meter});
+   receipt(meter.failed?'failed':'answered',null,{confirmation:result.replyAgreesWithConfirmation,sources:result.replyAgreesWithSources});
+   return result;
+  } catch(error) {
+   // Refusals are AppErrors under 500, plus the budget's 503; anything else is a failure.
+   const refused=error instanceof AppError && (error.status<500 || error.code==='DESK_BUDGET_SPENT');
+   receipt(refused?'refused':'failed',error instanceof AppError?error.code:'INTERNAL_ERROR',null);throw error;
+  }});
+ // MCP (stateless Streamable HTTP). Refusals come back inside the JSON-RPC result as tool errors, not as HTTP errors.
+ router.on('POST','/mcp',async ctx=>{await handleMcp(db,deskGate,ctx.req,ctx.res,ctx.body,ctx.user,ctx.requestId);});
+ for(const m of ['GET','DELETE'])router.on(m,'/mcp',ctx=>{ctx.res.writeHead(405,{'Content-Type':'application/json','Allow':'POST'});ctx.res.end(JSON.stringify({jsonrpc:'2.0',error:{code:-32000,message:'Method not allowed. This MCP server is stateless: POST only.'},id:null}));});
  router.on('POST','/help',ctx=>{const t=createTicket(db,ctx.body,ctx.user);redirect(ctx.res,`/help?received=${t.id}`);});
  router.on('POST','/feedback',ctx=>{const f=createFeedback(db,ctx.body,ctx.user);const next=new URL(safeNext(ctx.body.next || f.page),'http://localhost');next.searchParams.set('feedback','1');redirect(ctx.res,next.pathname+next.search);});
  router.on('POST','/auth/signin',ctx=>{const u=signIn(db,String(ctx.body.userId),ctx.res);const next=safeNext(ctx.body.next);redirect(ctx.res,next==='/'&&u.role==='host'?'/host':next);});
@@ -105,7 +140,9 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
    const url=new URL(req.url || '/',`http://127.0.0.1:${PORT}`);
    res.setHeader('X-Request-Id',requestId);res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');
    const quiet=url.pathname.startsWith('/_next/') || url.pathname.startsWith('/__nextjs');
-   if(!quiet)res.on('finish',()=>log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId}));
+   // A failed request also logs its allow-listed query and body fields and, on a 4xx, the error code, so it can be replayed.
+   let body:Record<string,unknown>|undefined,errorCode:string|undefined;
+   if(!quiet)res.on('finish',()=>{const failed=res.statusCode>=400;log('http.request',{method,path:url.pathname,status:res.statusCode,ms:Number((performance.now()-start).toFixed(2)),requestId,...(failed?{query:replayFields(url.searchParams),body:replayFields(body),errorCode:res.statusCode<500?errorCode:undefined}:{})});});
    let user;
    try {
      const hostHeader=req.headers.host || '';
@@ -126,7 +163,8 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
        res.setHeader('Content-Security-Policy',"default-src 'self'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'");
        res.setHeader('Cache-Control','no-store');
        if(method==='HEAD')req.method='GET';
-       await router.dispatch({req,res,db,url,params:{},user,body:await readBody(req),requestId});
+       body=await readBody(req);
+       await router.dispatch({req,res,db,url,params:{},user,body,requestId});
        return;
      }
      // Pages only see a trustworthy "local" marker: set here from the socket, never taken from the client.
@@ -135,9 +173,12 @@ export function createApp(db: DatabaseSync = bootstrap(), pages?: Pages) {
      await pages.handle(req,res);
    } catch(error) {
      const err=error instanceof AppError?error:new AppError(error instanceof URIError?400:500,error instanceof URIError?'BAD_PATH':'INTERNAL_ERROR',error instanceof URIError?'Invalid URL encoding.':'Something went wrong. Please try again.');
+     errorCode=err.code;
+     if((err as any).retryAfter && !res.headersSent)res.setHeader('Retry-After',String((err as any).retryAfter));
+     if(url.pathname==='/desk' && err.code.startsWith('DESK_'))log('desk.refused',{requestId,code:err.code});
      if(err.status>=500)log('request.failed',{requestId,message:error instanceof Error?error.message:'Unknown error'});
      if(!res.headersSent) {
-       if(url.pathname.startsWith('/api/'))json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
+       if(url.pathname.startsWith('/api/') || url.pathname==='/desk')json(res,{error:{code:err.code,message:err.message,requestId}},err.status);
        else if(err.status===401)redirect(res,`/signin?next=${encodeURIComponent(method==='GET'?url.pathname+url.search:refererPath(req))}`);
        else if(method!=='GET' && method!=='HEAD')redirect(res,withError(refererPath(req),err.message));
        else json(res,{error:{code:err.code,message:err.message,requestId}},err.status);

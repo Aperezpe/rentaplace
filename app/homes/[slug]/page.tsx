@@ -17,7 +17,7 @@ import { capitalize, dateLabel, money, plural } from '@/lib/format';
 import { firstOpenStay, stayParams } from '../../../src/stay.ts';
 import { quote } from '../../../src/domain/bookings.ts';
 import { listingCalendar, monthDates } from '../../../src/domain/calendar.ts';
-import { policyText } from '../../../src/domain/cancellation.ts';
+import { rulePassages } from '../../../src/domain/rules.ts';
 import { addDays, today } from '../../../src/config.ts';
 
 type Props = { params: Promise<{ slug: string }>; searchParams: SearchParams };
@@ -48,6 +48,9 @@ export default async function HomeDetail({ params, searchParams }: Props) {
   const prev = addDays(days[0], -1).slice(0, 7), next = addDays(days.at(-1)!, 1).slice(0, 7);
   const monthLink = (m: string) => { const x = new URLSearchParams(search); x.set('month', m); return `/homes/${home.slug}?${x}#availability`; };
   const bookingLink = `/book/${home.slug}?${new URLSearchParams({ from: p.from, to: p.to, guests: String(p.guests) })}`;
+  // Published passages only: a topic the home publishes nothing on is not shown.
+  const passages = rulePassages(database, home);
+  const cancellation = passages.find((p) => p.topic === 'cancellation');
   const reviewers = ['guest-11', 'guest-27', 'guest-42', 'guest-58', 'guest-73', 'guest-96'];
 
   return (
@@ -164,12 +167,10 @@ export default async function HomeDetail({ params, searchParams }: Props) {
           <section className="space-y-3">
             <h2 className="text-3xl">Good to know</h2>
             <ul className="grid gap-2 text-sm">
-              <li>Check-in after 3 pm · Check-out by 11 am</li>
-              <li>No smoking indoors · Quiet hours 10 pm to 8 am</li>
-              <li>Up to {plural(home.sleeps, 'guest')} · {home.amenities.includes('Pet friendly') ? 'Pets welcome; please include them in your note to support.' : 'Please leave pets at home.'}</li>
+              {passages.filter((p) => p.topic !== 'cancellation').map((p) => <li key={p.id} id={`rule-${p.topic}`}>{p.text}</li>)}
             </ul>
             <h3 className="pt-2 text-xl">Cancellation</h3>
-            <p className="text-sm text-muted-foreground">{policyText[home.cancellation_policy]} No refunds after check-in.</p>
+            {cancellation && <p id={`rule-${cancellation.topic}`} className="text-sm text-muted-foreground">{cancellation.text}</p>}
           </section>
         </div>
 

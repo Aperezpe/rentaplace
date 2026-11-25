@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 import { openDatabase, decodeListing } from '../src/db.ts';
+import { publishSeedRules } from '../src/domain/rules.ts';
 import { DB_PATH, addDays } from '../src/config.ts';
 import { priceStay } from '../src/domain/pricing.ts';
 import { anchors, regions } from './anchors.ts';
@@ -133,6 +134,7 @@ export function seedDatabase(db: DatabaseSync, seed = 260609): Record<string, nu
     const fStmt=db.prepare('INSERT INTO feedback VALUES (?,?,?,?,?,?)');
     fStmt.run('feedback-1','guest-1','/search','good','Clear prices, but I would like to save a search.','2026-11-07T15:20:00.000Z');
     fStmt.run('feedback-2','host-1','/host/calendar','needs-work','The calendar is difficult to use with many homes.','2026-11-08T11:10:00.000Z');
+    publishSeedRules(db);
     db.exec('COMMIT');
     return {homes:700,hosts:120,guests:3000,bookings:10002,reviews:completed.length,supportTickets:28};
   } catch(e) { db.exec('ROLLBACK'); throw e; }

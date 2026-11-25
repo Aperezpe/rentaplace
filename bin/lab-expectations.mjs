@@ -4,7 +4,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const KINDS = ['do', 'run', 'expect', 'never', 'see', 'absent'];
+// saved: what the app's own records must hold after the case, checked in code apart from anything the agent said.
+export const KINDS = ['do', 'run', 'expect', 'never', 'see', 'absent', 'saved'];
 export const SETUP_TITLES = /^(before|setup|before the role opens)$/i;
 
 export const FORMAT = `# <Agent> expectations
@@ -32,7 +33,7 @@ function strip(text) {
 }
 
 /** Parse expectations Markdown into {title, before:[steps], items:[{id,title,lines}]}. Throws with a line number on mistakes. */
-export function parse(markdown, role = 'Agent') {
+export function parse(markdown, role = 'Agent', options = {}) {
   const out = { title: '', before: [], items: [] };
   let section = null, n = 0;
   for (const raw of String(markdown).split(/\r?\n/)) {
@@ -48,11 +49,11 @@ export function parse(markdown, role = 'Agent') {
       else { const item = { id: out.items.length + 1, title, lines: [] }; out.items.push(item); section = item; }
       continue;
     }
-    const m = line.match(/^(Do|Run|Expect|Never|See|Absent)\s*(?:\(([^)]+)\))?\s*:\s*(.+)$/i);
+    const m = line.match(/^(Do|Run|Expect|Never|See|Absent|Saved)\s*(?:\(([^)]+)\))?\s*:\s*(.+)$/i);
     if (!m) {
       if (section && section.lines.length && /^\s/.test(raw)) { section.lines.at(-1).text += ' ' + line.trim(); continue; }
       if (!section) continue; // prose before the first section is commentary
-      throw Error(`Line ${n}: start with Do, Run, Expect, Never, See or Absent, e.g. "Expect (${role}): asks which homes it covers".`);
+      throw Error(`Line ${n}: start with Do, Run, Expect, Never, See, Absent or Saved, e.g. "Expect (${role}): asks which homes it covers".`);
     }
     if (!section) throw Error(`Line ${n}: put "${m[1]}" under a "## Title" heading.`);
     const kind = m[1].toLowerCase();
@@ -60,20 +61,22 @@ export function parse(markdown, role = 'Agent') {
     if (/^(agent|role)$/i.test(pane)) pane = role; // (Role) is the old spelling of (Agent)
     if (/^main$/i.test(pane)) pane = 'Main';
     if (section.setup && kind !== 'do' && kind !== 'run') throw Error(`Line ${n}: the Before section only holds Do and Run lines.`);
-    if (kind === 'run' && !section.setup) throw Error(`Line ${n}: Run lines belong under "## Before"; the lab runs them before the first prompt.`);
-    if (kind === 'run') { section.lines.push({ kind, pane: 'lab', text: m[3].trim(), line: n }); continue; }
+    // A runner that can set things up per case (bin/desk-checks.ts) opts in with caseRun; the agent lab keeps Run under Before.
+    if (kind === 'run' && !section.setup && !options.caseRun) throw Error(`Line ${n}: Run lines belong under "## Before"; the lab runs them before the first prompt.`);
+    if (kind === 'run' || kind === 'saved') { section.lines.push({ kind, pane: kind === 'run' ? 'lab' : 'records', text: m[3].trim(), line: n }); continue; }
     const text = kind === 'see' || kind === 'absent' ? strip(m[3]) : m[3].trim();
     section.lines.push({ kind, pane, text, line: n });
   }
   if (!out.items.length) throw Error('No expectations yet. Add a "## Title" section with at least one Expect, Never, See or Absent line.');
   for (const item of out.items) {
-    if (!item.lines.some(l => l.kind !== 'do')) throw Error(`"${item.title}" has no check. Add an Expect, Never, See or Absent line.`);
+    if (!item.lines.some(l => !['do', 'run'].includes(l.kind))) throw Error(`"${item.title}" has no check. Add an Expect, Never, See, Absent or Saved line.`);
   }
   return out;
 }
 
 export function judged(item) { return item.lines.filter(l => l.kind === 'expect' || l.kind === 'never'); }
 export function observed(item) { return item.lines.filter(l => l.kind === 'see' || l.kind === 'absent'); }
+export function saved(item) { return item.lines.filter(l => l.kind === 'saved'); }
 export function steps(item) { return item.lines.filter(l => l.kind === 'do'); }
 
 /** Panes named in the file other than Main and the agent. */

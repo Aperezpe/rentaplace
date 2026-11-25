@@ -5,6 +5,8 @@ export const ROOT = process.env.RAP_ROOT || resolve(dirname(fileURLToPath(import
 process.env.RAP_ROOT ||= ROOT;
 export const DB_PATH = process.env.RAP_DB || resolve(ROOT, 'data/rentaplace.db');
 export const LOG_DIR = process.env.RAP_LOG_DIR || resolve(ROOT, 'logs');
+export const WATCHER_DIR = process.env.RAP_WATCHER_DIR || resolve(ROOT, 'data/watcher');
+export const DESK_DIR = process.env.RAP_DESK_DIR || resolve(ROOT, 'data/desk');
 export const OUTBOX_DIR = process.env.RAP_OUTBOX_DIR || resolve(ROOT, 'outbox');
 export const PORT = Number(process.env.PORT || 5180);
 export function today(): string {

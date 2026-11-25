@@ -1,0 +1,15 @@
+{
+  "name": "issues",
+  "description": "Support tickets with the sorter's tags. Waiting for a person (money or unsure) first, with the tag's reasons; then not sorted; then sorted. Read only, no model.",
+  "source": {
+    "type": "command",
+    "command": "node --disable-warning=ExperimentalWarning src/issues.ts"
+  },
+  "judge": false,
+  "model": "none",
+  "thinking": "off",
+  "actions": [],
+  "refresh_seconds": 30,
+  "item_fields": [],
+  "created": "2026-11-22T00:00:00.000Z"
+}
